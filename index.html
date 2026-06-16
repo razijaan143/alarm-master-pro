@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>AlarmMaster Pro</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6c63ff">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{--bg:#0d0d18;--bg2:#13131f;--bg3:#1c1c2e;--accent:#7c6bff;--accent2:#ff6b9d;--gold:#ffd700;--text:#ffffff;--text2:#8888aa;--card:#1a1a2e;--green:#00d4aa;--red:#ff4757;}
+body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;min-height:100vh;overflow-x:hidden;}
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* TOP BAR */
+.app-topbar{padding:16px 18px 10px;display:flex;align-items:center;justify-content:space-between;}
+.app-name{font-size:18px;font-weight:800;color:var(--accent);}
+.app-name span{color:var(--accent2);}
+.app-date-hijri{font-size:11px;color:var(--text2);margin-top:1px;}
+.top-icons{display:flex;gap:10px;}
+.top-icon{width:36px;height:36px;border-radius:50%;background:var(--bg3);border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+
+/* CLOCK */
+.clock-section{text-align:center;padding:10px 0 16px;}
+.main-clock{font-size:72px;font-weight:900;letter-spacing:-2px;line-height:1;background:linear-gradient(135deg,#fff,#aaa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.main-clock .ampm{font-size:28px;font-weight:700;vertical-align:super;}
+.clock-sec{font-size:16px;color:var(--text2);font-weight:600;margin-top:2px;}
+.clock-date{font-size:13px;color:var(--text2);margin-top:2px;}
+
+/* HORIZONTAL TABS */
+.tabs-scroll{display:flex;gap:10px;overflow-x:auto;padding:0 18px 14px;scrollbar-width:none;}
+.tabs-scroll::-webkit-scrollbar{display:none;}
+.tab-btn{background:var(--bg3);border:1px solid rgba(124,107,255,.3);border-radius:30px;padding:8px 16px;color:var(--text2);cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap;font-family:'Poppins',sans-serif;transition:all .2s;display:flex;align-items:center;gap:6px;}
+.tab-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;border-color:transparent;}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding-bottom:90px;}
+.section{padding:0 18px 18px;}
+
+/* NAMAZ CARD */
+.namaz-card{background:var(--bg3);border-radius:20px;padding:16px;margin:0 18px 16px;border:1px solid rgba(124,107,255,.2);}
+.namaz-card-title{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:12px;}
+.prayer-row{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;}
+.prayer-row::-webkit-scrollbar{display:none;}
+.prayer-col{background:var(--bg2);border-radius:14px;padding:12px 14px;text-align:center;min-width:72px;flex-shrink:0;}
+.prayer-col.active-p{background:linear-gradient(135deg,var(--accent),var(--accent2));}
+.prayer-col .p-icon{font-size:20px;}
+.prayer-col .p-name{font-size:11px;color:var(--text2);margin-top:4px;}
+.prayer-col.active-p .p-name{color:rgba(255,255,255,.8);}
+.prayer-col .p-time{font-size:14px;font-weight:700;color:var(--green);margin-top:2px;}
+.prayer-col.active-p .p-time{color:white;}
+
+/* ADD ALARM BTN */
+.add-alarm-btn{margin:0 18px 20px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:16px;padding:18px;width:calc(100% - 36px);color:white;font-size:16px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;letter-spacing:.5px;}
+
+/* SECTION HEADER */
+.sec-header{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;}
+
+/* ALARM ITEMS */
+.alarm-item{background:var(--bg3);border-radius:18px;padding:16px 18px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;border:1px solid rgba(255,255,255,.05);}
+.alarm-item.disabled{opacity:.4;}
+.alarm-time-big{font-size:32px;font-weight:800;letter-spacing:-1px;}
+.alarm-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+.alarm-days-tag{font-size:11px;color:var(--accent);margin-top:4px;}
+.toggle{position:relative;width:50px;height:26px;display:inline-block;}
+.toggle input{opacity:0;width:0;height:0;}
+.slider{position:absolute;inset:0;background:#333;border-radius:26px;cursor:pointer;transition:.3s;}
+.slider:before{content:'';position:absolute;width:20px;height:20px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s;}
+input:checked+.slider{background:var(--accent);}
+input:checked+.slider:before{transform:translateX(24px);}
+
+/* BOTTOM NAV */
+.bottom-nav{background:var(--bg2);display:flex;border-top:1px solid rgba(255,255,255,.06);position:fixed;bottom:0;left:0;right:0;z-index:100;padding:8px 0 12px;}
+.bnav-btn{flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.bnav-btn .bi{font-size:22px;}
+.bnav-btn .bl{font-size:10px;color:var(--text2);font-family:'Poppins',sans-serif;}
+.bnav-btn.active .bl{color:var(--accent);}
+
+/* SUB SCREENS TOPBAR */
+.topbar{background:var(--bg2);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06);position:sticky;top:0;z-index:50;}
+.topbar h2{font-size:17px;color:var(--text);font-weight:700;}
+.back-btn{background:none;border:none;color:var(--text);font-size:24px;cursor:pointer;}
+.sub-content{flex:1;padding:16px 18px;overflow-y:auto;padding-bottom:80px;}
+
+/* CARDS */
+.card{background:var(--bg3);border-radius:18px;padding:16px;margin-bottom:14px;border:1px solid rgba(255,255,255,.05);}
+.card h3{font-size:15px;color:var(--gold);margin-bottom:12px;font-weight:700;}
+
+/* FORMS */
+.fg{margin-bottom:14px;}
+.fg label{display:block;font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;font-weight:600;letter-spacing:.5px;}
+.fg input,.fg select,.fg textarea{width:100%;background:var(--bg2);border:1px solid rgba(124,107,255,.4);border-radius:12px;padding:12px 14px;color:var(--text);font-size:15px;font-family:'Poppins',sans-serif;}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--accent);}
+.btn-p{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:14px;padding:15px;width:100%;color:white;font-size:15px;font-weight:700;cursor:pointer;margin-top:14px;font-family:'Poppins',sans-serif;}
+.btn-s{background:var(--bg3);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:13px;width:100%;color:var(--text);font-size:14px;cursor:pointer;margin-top:8px;font-family:'Poppins',sans-serif;}
+.btn-g{background:var(--green);border:none;border-radius:14px;padding:13px;width:100%;color:white;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px;font-family:'Poppins',sans-serif;}
+
+/* MODAL */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;justify-content:center;align-items:flex-end;}
+.modal-ov.active{display:flex;}
+.modal{background:var(--bg2);border-radius:28px 28px 0 0;padding:22px 20px;width:100%;max-height:92vh;overflow-y:auto;border-top:1px solid rgba(124,107,255,.3);}
+.modal h3{font-size:18px;margin-bottom:18px;color:var(--accent);font-weight:700;}
+.modal-handle{width:40px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:0 auto 18px;}
+.days-picker{display:flex;gap:8px;flex-wrap:wrap;}
+.day-btn{background:var(--bg3);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 12px;color:var(--text);cursor:pointer;font-size:12px;font-weight:600;font-family:'Poppins',sans-serif;}
+.day-btn.selected{background:var(--accent);border-color:var(--accent);}
+.trow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);}
+.trow label{font-size:13px;font-weight:600;}
+
+/* PRAYER LIST */
+.prayer-item-full{background:var(--bg3);border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;border:1px solid rgba(255,255,255,.05);}
+.prayer-item-full.active-prayer{border:1px solid var(--gold);background:rgba(255,215,0,.06);}
+.p-full-name{font-size:15px;font-weight:700;}
+.p-full-ar{font-size:12px;color:var(--text2);margin-top:2px;}
+.p-full-time{font-size:20px;font-weight:700;color:var(--accent);}
+
+/* NEXT PRAYER BANNER */
+.np-banner{background:linear-gradient(135deg,rgba(124,107,255,.2),rgba(255,107,157,.2));border:1px solid rgba(124,107,255,.3);border-radius:18px;padding:18px;text-align:center;margin-bottom:14px;}
+.np-name{font-size:24px;font-weight:800;color:var(--gold);}
+.np-cd{font-size:36px;font-weight:700;color:white;font-family:monospace;}
+.np-label{font-size:12px;color:var(--text2);margin-bottom:6px;}
+
+/* NAMES */
+.search-bar{width:100%;background:var(--bg3);border:1px solid rgba(124,107,255,.3);border-radius:14px;padding:12px 16px;color:var(--text);font-size:14px;margin-bottom:16px;font-family:'Poppins',sans-serif;}
+.name-item{background:var(--bg3);border-radius:14px;padding:14px;margin-bottom:8px;border:1px solid rgba(255,255,255,.04);}
+.name-ar{font-size:24px;color:var(--gold);text-align:right;direction:rtl;margin:6px 0;font-family:'Amiri',serif;}
+
+/* HADITH */
+.h-ar{font-size:20px;direction:rtl;text-align:right;line-height:2;color:var(--gold);font-family:'Amiri',serif;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:12px;}
+
+/* DUA */
+.cat-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:14px;scrollbar-width:none;}
+.cat-scroll::-webkit-scrollbar{display:none;}
+.cat-btn{background:var(--bg3);border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:8px 16px;color:var(--text2);cursor:pointer;font-size:12px;white-space:nowrap;font-family:'Poppins',sans-serif;font-weight:600;}
+.cat-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;border-color:transparent;}
+.dua-card{background:var(--bg3);border-radius:16px;padding:16px;margin-bottom:10px;border:1px solid rgba(255,255,255,.04);}
+.dua-ar{font-size:18px;direction:rtl;text-align:right;line-height:2;font-family:'Amiri',serif;}
+
+/* WORLD CLOCK */
+.wc-item{background:var(--bg3);border-radius:16px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border:1px solid rgba(255,255,255,.04);}
+
+/* STOPWATCH / TIMER */
+.big-display{font-size:64px;font-weight:800;font-family:monospace;text-align:center;padding:30px 0;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.circle-btns{display:flex;gap:16px;justify-content:center;margin-top:10px;}
+.circle-btn{width:72px;height:72px;border-radius:50%;border:none;font-size:24px;cursor:pointer;}
+.circle-btn.go{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;}
+.circle-btn.stop{background:var(--red);color:white;}
+.circle-btn.neutral{background:var(--bg3);color:var(--text);border:1px solid rgba(255,255,255,.1);}
+.preset-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:14px;}
+.preset-btn{background:var(--bg3);border:1px solid rgba(124,107,255,.3);border-radius:22px;padding:8px 16px;color:var(--text);cursor:pointer;font-size:12px;font-family:'Poppins',sans-serif;font-weight:600;}
+.preset-btn:active{background:var(--accent);}
+
+/* TASBEEH */
+.tb-count{font-size:90px;font-weight:900;text-align:center;background:linear-gradient(135deg,var(--gold),#ff9500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.tb-name-ar{font-size:26px;color:var(--gold);text-align:center;font-family:'Amiri',serif;margin:8px 0;}
+.tb-big-btn{width:190px;height:190px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;font-size:56px;cursor:pointer;margin:20px auto;display:block;box-shadow:0 8px 40px rgba(124,107,255,.5);transition:transform .1s;}
+.tb-big-btn:active{transform:scale(.93);}
+.tb-presets{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:14px;}
+.tb-preset{background:var(--bg3);border:1px solid rgba(124,107,255,.3);border-radius:22px;padding:8px 14px;color:var(--text2);cursor:pointer;font-size:12px;font-family:'Poppins',sans-serif;font-weight:600;}
+.tb-preset.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;border-color:transparent;}
+
+/* SLEEP */
+.sleep-hero{background:linear-gradient(135deg,#0d0d30,#1a0d30);border-radius:20px;padding:24px;text-align:center;margin-bottom:14px;border:1px solid rgba(124,107,255,.2);}
+.sleep-dur{font-size:40px;font-weight:800;color:var(--gold);margin:10px 0;font-family:monospace;}
+
+/* QUOTES */
+.quote-hero{background:linear-gradient(135deg,rgba(124,107,255,.15),rgba(255,107,157,.15));border-radius:20px;padding:22px;margin-bottom:14px;border:1px solid rgba(124,107,255,.2);text-align:center;}
+.q-ar{font-size:22px;direction:rtl;color:var(--gold);font-family:'Amiri',serif;margin-bottom:14px;line-height:1.8;}
+.q-txt{font-size:15px;line-height:1.8;font-style:italic;color:var(--text);}
+.q-src{font-size:12px;color:var(--accent);margin-top:10px;font-weight:600;}
+
+/* REMINDER */
+.rem-item{background:var(--bg3);border-radius:16px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;border:1px solid rgba(255,255,255,.04);}
+
+/* ZAKAT */
+.zakat-res{background:linear-gradient(135deg,var(--gold),#ff9500);border-radius:18px;padding:20px;text-align:center;margin-top:14px;}
+.zakat-amt{font-size:36px;font-weight:800;color:#333;}
+
+/* COMPASS */
+.compass-wrap{text-align:center;padding:16px 0;}
+.compass{width:220px;height:220px;border-radius:50%;border:3px solid var(--accent);margin:0 auto;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,var(--bg3),var(--bg2));box-shadow:0 0 40px rgba(124,107,255,.3);}
+.compass-needle{font-size:70px;transition:transform .5s;}
+
+/* CALENDAR */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.cal-dh{text-align:center;font-size:11px;color:var(--text2);padding:4px;font-weight:600;}
+.cal-d{text-align:center;padding:8px 4px;border-radius:10px;font-size:13px;cursor:pointer;font-weight:600;}
+.cal-d.today{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;}
+.cal-d.friday{color:var(--gold);}
+.cal-d.has-event{background:rgba(124,107,255,.2);border:1px solid var(--accent);}
+
+/* SETTINGS */
+.set-item{background:var(--bg3);border-radius:16px;padding:16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border:1px solid rgba(255,255,255,.04);}
+.set-label h4{font-size:14px;font-weight:700;}
+.set-label p{font-size:12px;color:var(--text2);margin-top:3px;}
+.lang-grid{display:flex;flex-wrap:wrap;gap:8px;}
+.lang-btn{background:var(--bg3);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:7px 14px;color:var(--text2);cursor:pointer;font-size:13px;font-family:'Poppins',sans-serif;font-weight:600;}
+.lang-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;border-color:transparent;}
+.sel{background:var(--bg3);border:1px solid rgba(124,107,255,.3);border-radius:10px;padding:8px 12px;color:var(--text);font-size:13px;font-family:'Poppins',sans-serif;}
+
+/* RING */
+.ring-ov{display:none;position:fixed;inset:0;background:linear-gradient(135deg,#0a001a,#0a0a18);z-index:600;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:28px;}
+.ring-ov.active{display:flex;}
+.ring-icon{font-size:90px;animation:rsh .4s infinite alternate;}
+@keyframes rsh{from{transform:rotate(-15deg) scale(1);}to{transform:rotate(15deg) scale(1.1);}}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.ring-clock{font-size:72px;font-weight:900;background:linear-gradient(135deg,var(--gold),#ff9500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-family:monospace;}
+.ring-lbl{font-size:20px;color:var(--text2);margin:10px 0 32px;}
+.ring-btns{display:flex;gap:16px;}
+.btn-snooze{background:rgba(255,255,255,.1);border:2px solid var(--accent);border-radius:16px;padding:16px 28px;color:var(--text);font-size:16px;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:600;}
+.btn-dismiss{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:16px;padding:16px 28px;color:white;font-size:16px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;}
+
+/* MATH */
+.math-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:700;flex-direction:column;justify-content:center;align-items:center;padding:28px;text-align:center;}
+.math-ov.active{display:flex;}
+.math-q{font-size:58px;font-weight:900;background:linear-gradient(135deg,var(--gold),#ff9500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin:20px 0;}
+.math-inp{font-size:36px;background:var(--bg3);border:2px solid var(--accent);border-radius:16px;padding:16px;color:var(--text);text-align:center;width:100%;max-width:280px;margin-bottom:16px;font-family:'Poppins',sans-serif;}
+.diff-row{display:flex;gap:8px;margin-bottom:16px;}
+.diff-btn{background:var(--bg3);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:8px 16px;color:var(--text2);cursor:pointer;font-size:12px;font-family:'Poppins',sans-serif;font-weight:600;}
+.diff-btn.active{background:var(--accent);color:white;border-color:var(--accent);}
+
+/* QUIZ */
+.quiz-ov{display:none;position:fixed;inset:0;background:linear-gradient(135deg,#0a001a,#0a0a18);z-index:400;flex-direction:column;justify-content:center;align-items:center;padding:28px;text-align:center;}
+.quiz-ov.active{display:flex;}
+.quiz-q{font-size:17px;font-weight:700;margin:18px 0;line-height:1.6;color:var(--text);}
+.quiz-opts{display:flex;flex-direction:column;gap:10px;width:100%;max-width:400px;}
+.quiz-opt{background:var(--bg3);border:2px solid rgba(255,255,255,.08);border-radius:16px;padding:15px;color:var(--text);cursor:pointer;font-size:14px;font-family:'Poppins',sans-serif;font-weight:600;transition:all .2s;}
+.quiz-opt:active{transform:scale(.97);}
+.quiz-opt.correct{background:var(--green);border-color:var(--green);color:white;}
+.quiz-opt.wrong{background:var(--red);border-color:var(--red);color:white;}
+
+/* NOTIF */
+.notif-bar{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:16px;padding:14px 16px;margin:0 18px 14px;display:flex;align-items:center;gap:12px;}
+.notif-bar button{background:white;border:none;border-radius:10px;padding:8px 16px;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;margin-left:auto;white-space:nowrap;font-family:'Poppins',sans-serif;}
+
+/* WATER */
+.water-hero{background:linear-gradient(135deg,rgba(0,212,170,.15),rgba(124,107,255,.15));border-radius:20px;padding:24px;text-align:center;margin-bottom:14px;border:1px solid rgba(0,212,170,.2);}
+.water-count{font-size:48px;font-weight:900;color:var(--accent);}
+.water-bar-wrap{background:var(--bg3);border-radius:10px;height:14px;margin:14px 0;overflow:hidden;}
+.water-bar{background:linear-gradient(90deg,var(--accent),var(--green));height:100%;border-radius:10px;transition:width .4s;}
+
+/* LAP */
+.lap-item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px;}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 24px;color:var(--text2);}
+.empty .ei{font-size:60px;margin-bottom:14px;}
+.empty p{font-size:14px;line-height:1.6;}
+
+.stitle{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:2px;margin:16px 0 10px;}
+.add-fab{position:fixed;bottom:82px;right:18px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:50%;width:58px;height:58px;font-size:28px;color:white;cursor:pointer;box-shadow:0 4px 24px rgba(124,107,255,.5);z-index:50;}
+</style>
+</head>
+<body>
+<!-- ===== MAIN ALARM SCREEN (HOME) ===== -->
+<div id="mainScreen" class="screen active">
+  <div class="app-topbar">
+    <div>
+      <div class="app-name">⏰ AlarmMaster <span>Pro</span></div>
+      <div class="app-date-hijri" id="hijriDate">Loading...</div>
+    </div>
+    <div class="top-icons">
+      <button class="top-icon" onclick="go('settingsScreen')">⚙️</button>
+      <button class="top-icon" onclick="toggleTheme()" id="themeBtn">🌙</button>
+    </div>
+  </div>
+  <div class="clock-section">
+    <div class="main-clock" id="mainClock"><span id="clockHM">12:54</span><span class="ampm" id="clockAMPM">PM</span></div>
+    <div class="clock-sec"><span id="clockSec">00</span> sec</div>
+    <div class="clock-date" id="clockDate">Monday, June 15, 2026</div>
+  </div>
+  <div class="tabs-scroll">
+    <button class="tab-btn active" onclick="showTab('tabAlarm',this)">⏰ Alarm</button>
+    <button class="tab-btn" onclick="go('namazScreen')">🕌 Prayers</button>
+    <button class="tab-btn" onclick="go('worldClockScreen')">🌍 World</button>
+    <button class="tab-btn" onclick="go('namesScreen')">📿 Allah Names</button>
+    <button class="tab-btn" onclick="go('hadithScreen')">📖 Hadith</button>
+    <button class="tab-btn" onclick="go('duaScreen')">🤲 Duas</button>
+    <button class="tab-btn" onclick="go('zakatScreen')">💰 Zakat</button>
+    <button class="tab-btn" onclick="go('qiblaScreen')">🧭 Qibla</button>
+    <button class="tab-btn" onclick="go('islamicCalScreen')">📅 Cal</button>
+    <button class="tab-btn" onclick="go('tasbeehScreen')">📿 Tasbeeh</button>
+    <button class="tab-btn" onclick="go('quotesScreen')">✨ Quotes</button>
+    <button class="tab-btn" onclick="go('reminderScreen')">💊 Remind</button>
+    <button class="tab-btn" onclick="go('calendarScreen')">📆 Events</button>
+    <button class="tab-btn" onclick="go('waterScreen')">💧 Water</button>
+    <button class="tab-btn" onclick="go('stopwatchScreen')">⏱️ Watch</button>
+    <button class="tab-btn" onclick="go('timerScreen')">⏳ Timer</button>
+    <button class="tab-btn" onclick="go('sleepScreen')">😴 Sleep</button>
+    <button class="tab-btn" onclick="go('historyScreen')">📊 Stats</button>
+  </div>
+  <div id="notifBarHome" class="notif-bar" style="display:none;">
+    <div>🔔</div>
+    <div style="font-size:13px;"><div style="font-weight:700;">Enable Notifications</div><div style="font-size:11px;opacity:.8;">Get prayer times & reminders</div></div>
+    <button onclick="reqNotif()">Allow</button>
+  </div>
+  <div class="content">
+    <!-- NAMAZ MINI -->
+    <div class="namaz-card" id="namazMiniCard">
+      <div class="namaz-card-title">🕌 Namaz Times — <span id="namazMiniCity">Karachi</span></div>
+      <div class="prayer-row" id="prayerMiniRow">
+        <div style="color:var(--text2);font-size:13px;padding:10px;">Loading...</div>
+      </div>
+    </div>
+    <button class="add-alarm-btn" onclick="openAlarmModal()">+ Add New Alarm</button>
+    <div class="section">
+      <div class="sec-header">My Alarms</div>
+      <div id="alarmList"><div class="empty"><div class="ei">⏰</div><p>No alarms yet 😊<br>Tap + to add one</p></div></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="bnav-btn active" onclick="go('mainScreen')"><span class="bi">⏰</span><span class="bl">Alarm</span></button>
+    <button class="bnav-btn" onclick="go('stopwatchScreen')"><span class="bi">⏱️</span><span class="bl">Watch</span></button>
+    <button class="bnav-btn" onclick="go('timerScreen')"><span class="bi">⏳</span><span class="bl">Timer</span></button>
+    <button class="bnav-btn" onclick="go('worldClockScreen')"><span class="bi">🌍</span><span class="bl">World</span></button>
+    <button class="bnav-btn" onclick="go('tasbeehScreen')"><span class="bi">📿</span><span class="bl">Tasbeeh</span></button>
+    <button class="bnav-btn" onclick="go('namazScreen')"><span class="bi">🕌</span><span class="bl">Morning</span></button>
+    <button class="bnav-btn" onclick="go('settingsScreen')"><span class="bi">⚙️</span><span class="bl">Settings</span></button>
+  </div>
+</div>
+
+<!-- ADD ALARM MODAL -->
+<div class="modal-ov" id="alarmModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>⏰ Add New Alarm</h3>
+    <div class="fg"><label>Time</label><input type="time" id="aTime" value="07:00"></div>
+    <div class="fg"><label>Label</label><input type="text" id="aLabel" placeholder="Wake up, Fajr, School..."></div>
+    <div class="fg"><label>Repeat Days</label>
+      <div class="days-picker">
+        <button class="day-btn" data-day="0">Sun</button><button class="day-btn" data-day="1">Mon</button>
+        <button class="day-btn" data-day="2">Tue</button><button class="day-btn" data-day="3">Wed</button>
+        <button class="day-btn" data-day="4">Thu</button><button class="day-btn" data-day="5">Fri</button>
+        <button class="day-btn" data-day="6">Sat</button>
+      </div>
+    </div>
+    <div class="trow"><label>😴 Snooze (5 min)</label><label class="toggle"><input type="checkbox" id="aSnooze" checked><span class="slider"></span></label></div>
+    <div class="trow"><label>🧮 Math Mission</label><label class="toggle"><input type="checkbox" id="aMath"><span class="slider"></span></label></div>
+    <div id="mathDiffRow" style="display:none;padding:10px 0;">
+      <select id="aDiff" style="width:100%;background:var(--bg2);border:1px solid rgba(124,107,255,.4);border-radius:12px;padding:12px;color:var(--text);font-family:'Poppins',sans-serif;">
+        <option value="easy">Easy (1-10)</option><option value="medium">Medium (1-50)</option><option value="hard">Hard (1-100)</option>
+      </select>
+    </div>
+    <div class="fg" style="margin-top:12px;"><label>Sound</label>
+      <select id="aSound" style="width:100%;background:var(--bg2);border:1px solid rgba(124,107,255,.4);border-radius:12px;padding:12px;color:var(--text);font-family:'Poppins',sans-serif;">
+        <option value="beep">📳 Classic Beep</option><option value="bell">🔔 Bell</option><option value="digital">📱 Digital</option><option value="gentle">🎵 Gentle Rise</option>
+      </select>
+    </div>
+    <button class="btn-p" onclick="saveAlarm()">✅ Save Alarm</button>
+    <button class="btn-s" onclick="document.getElementById('alarmModal').classList.remove('active')">Cancel</button>
+  </div>
+</div>
+
+<!-- ===== NAMAZ SCREEN ===== -->
+<div id="namazScreen" class="screen">
+  <div class="topbar"><button class="back-btn" onclick="go('mainScreen')">←</button><h2>🕌 Namaz Times</h2><div></div></div>
+  <div class="sub-content">
+    <div class="np-banner"><div class="np-label">Next Prayer</div><div class="np-name" id="npName">Loading...</div><div class="np-cd" id="npCD">00:00:00</div></div>
+    <div class="card" style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div><div style="font-size:14px;font-weight:700;" id="namazCityLabel">🇵🇰 Karachi</div><div style="font-size:11px;color:var(--text2);" id="namazDateLabel"></div></div>
+        <select class="sel" id="namazCitySelect" onchange="loadPrayers()">
+          <optgroup label="🇵🇰 Pakistan"><option value="Karachi,PK">Karachi</option><option value="Lahore,PK">Lahore</option><option value="Islamabad,PK">Islamabad</option><option value="Rawalpindi,PK">Rawalpindi</option><option value="Faisalabad,PK">Faisalabad</option><option value="Multan,PK">Multan</option><option value="Peshawar,PK">Peshawar</option><option value="Quetta,PK">Quetta</option></optgroup>
+          <optgroup label="🇸🇦 Saudi Arabia"><option value="Makkah,SA">Makkah</option><option value="Madinah,SA">Madinah</option><option value="Riyadh,SA">Riyadh</option><option value="Jeddah,SA">Jeddah</option></optgroup>
+          <optgroup label="🇦🇪 UAE"><option value="Dubai,AE">Dubai</option><option value="Abu Dhabi,AE">Abu Dhabi</option></optgroup>
+          <optgroup label="🇬🇧 UK"><option value="London,GB">London</option><option value="Birmingham,GB">Birmingham</option><option value="Manchester,GB">Manchester</option></optgroup>
+          <optgroup label="🇺🇸 USA"><option value="New York,US">New York</option><option value="Houston,US">Houston</option><option value="Chicago,US">Chicago</option><option value="Los Angeles,US">Los Angeles</option></optgroup>
+          <optgroup label="🇨🇦 Canada"><option value="Toronto,CA">Toronto</option><option value="Vancouver,CA">Vancouver</option></optgroup>
+          <optgroup label="🇲🇾 Malaysia"><option value="Kuala Lumpur,MY">Kuala Lumpur</option></optgroup>
+          <optgroup label="🇮🇩 Indonesia"><option value="Jakarta,ID">Jakarta</option><option value="Surabaya,ID">Surabaya</option></optgroup>
+          <optgroup label="🇧🇩 Bangladesh"><option value="Dhaka,BD">Dhaka</option></optgroup>
+          <optgroup label="🇮🇳 India"><option value="Delhi,IN">Delhi</option><option value="Mumbai,IN">Mumbai</option></optgroup>
+          <optgroup label="🇹🇷 Turkey"><option value="Istanbul,TR">Istanbul</option></optgroup>
+          <optgroup label="🇪🇬 Egypt"><option value="Cairo,EG">Cairo</option></optgroup>
+          <optgroup label="🇶🇦 Qatar"><option value="Doha,QA">Doha</option></optgroup>
+          <optgroup label="🇦🇺 Australia"><option value="Sydney,AU">Sydney</option><option value="Melbourne,AU">Melbourne</option></optgroup>
+        </select>
+      </div>
+    </div>
+    <div id="prayerList"><div class="empty"><p>Loading prayer times...</p></div></div>
+    <div class="card"><div class="trow"><label>🔊 Azan Notification</label><label class="toggle"><input type="checkbox" id="azanToggle" onchange="localStorage.setItem('azan',this.checked)"><span class="slider"></span></label></div></div>
+  </div>
+</div>
+
+<!-- ===== WORLD CLOCK ===== -->
+<div id="worldClockScreen" class="screen">
+  <div class="topbar"><button class="back-btn" onclick="go('mainScreen')">←</button><h2>🌍 World Clock</h2><div></div></div>
+  <div class="sub-content" id="worldClockList"></div>
+</div>
+
+<!-- ===== 99 NAMES ===== -->
+<div id="namesScreen" class="screen">
+  <div class="topbar"><button class="back-btn" onclick="go('mainScreen')">←</button><h2>📿 99 Names of Allah</h2><div></div></div>
+  <div class="sub-content">
+    <input type="text" class="search-bar" placeholder="🔍 Search names..." oninput="filterNames(this.value)">
+    <div id="namesList"></div>
+  </div>
+</div>
+
+<!-- ===== HADITH ===== -->
+<div id="hadithScreen" class="screen">
+  <div class="topbar"><button class="back-btn" onclick="go('mainScreen')">←</button><h2>📖 Daily Hadith</h2><div></div></div>
+  <div class="sub-content">
+    <div class="card"><div class="h-ar" id="hAr"></div><div style="font-size:14px;line-height:1.7;" id="hTxt"></div><div style="font-size:12px;color:var(--accent);margin-top:10px;font-weight:600;" id="hSrc"></div></div>
+    <button class="btn-g" onclick="shareHadith()">📤 Share Hadith</button>
+    <button class="btn-p" onclick="nextHadith()">🔄 Next Hadith</button>
+  </div>
+</div>
+
+<!-- ===== DUA ===== -->
+<div id="duaScreen" class="screen">
+  <div class="topbar"><button class="back-btn" onclick="go('mainScreen')">←</button><h2>🤲 Daily Duas</h2><div></div></div>
+  <div class="sub-content">
+    <div class="cat-scroll" id="duaCats"></div>
+    <div id="duaList"></div>
+  </div>
+</div>
+
+<!-- ===== ZAKAT ===== -->
+<div id="zakatScreen" class="screen">
+  <div class="topbar"><button class="back-btn" onclick="go('mainScreen')">←</button><h2>💰 Zakat Calculator</h2><div></div></div>
+  <div class="sub-content">
+    <div class="card"><h3>Enter Your Assets</h3>
+      <div class="fg"><label>Cash & Bank (PKR)</label><input type="number" id="zCash" placeholder="0" oninput="calcZakat()"></div>
+      <div class="fg"><label>Gold Value (PKR)</label><input type="number" id="zGold" placeholder="0" oninput="calcZakat()"></div>
+      <div class="fg"><label>Silver Value (PKR)</label><input type="number" id="zSilver" placeholder="0" oninput="calcZakat()"></div>
+      <div class="fg"><label>Business Assets (PKR)</label><input type="number" id="zBiz" placeholder="0" oninput="calcZakat()"></div>
+      <div class="fg"><label>Debts / Loans (PKR)</label><input type="number" id="zDebt" placeholder="0" oninput="calcZakat()"></div>
+    </div>
+    <div id="zakatRes" style="display:none;" class="zakat-res"><div style="font-size:13px;color:#333;font-weight:600;">Your Zakat (2.5%)</div><div class="zakat-amt" id="zakatAmt">PKR 0</div></div>
+    <div class="card" style="font-size:13px;color:var(--text2);line-height:1.7;"><strong style="color:var(--gold);">📌 Nisab:</strong> Zakat is obligatory when assets exceed Nisab threshold (612g silver or 87g gold). Rate: 2.5%.</div>
+  </div>
+</div>
+
+<!-- ===== QIBLA ===== -->
+<div id="qiblaScreen" class="screen">
+  <div class="topbar"><button class="back-btn" onclick="go('mainScreen')">←</button><h2>🧭 Qibla Direction</h2><div></div></div>
+  <div class="sub-content">
+    <div class="compass-wrap">
+      <div style="font-size:22px;font-weight:800;color:var(--gold);margin-bottom:4px;" id="qiblaDeg">-- °</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:4px;" id="qiblaCity">Tap button to find Qibla</div>
+      <div style="font-size:12px;color:var(--accent);margin-bottom:16px;font-weight:600;" id="qiblaInstr">Then point your phone North and rotate slowly</div>
+      <div style="position:relative;width:240px;height:240px;margin:0 auto;">
+        <div class="compass" style="width:240px;height:240px;">
+          <!-- Compass rose -->
+          <div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:14px;font-weight:800;color:var(--red);">N</div>
+          <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:13px;color:var(--text2);">S</div>
+          <div style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--text2);">W</div>
+          <div style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--text2);">E</div>
+          <!-- Qibla needle -->
+          <div id="compassNeedle" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(292deg);font-size:56px;transition:transform 0.3s;transform-origin:center center;">🕋</div>
+        </div>
+      </div>
+      <div style="margin-top:20px;text-align:center;">
+        <button class="btn-p" onclick="getQibla()" style="margin-bottom:10px;">📍 Find My Qibla</button>
+        <button class="btn-s" onclick="stopQibla()" id="qiblaStopBtn" style="display:none;">⏹ Stop Compass</button>
+      </div>
+      <div id="qiblaStatus" style="margin-top:10px;font-size:13px;color:var(--text2);text-align:center;line-height:1.6;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ISLAMIC CALENDAR ===== -->
+<div id="islamicCalScreen" class="screen">
+  <div class="topbar"><button class="back-btn" onclick="go('mainScreen')">←</button><h2>📅 Islamic Calendar</h2><div></div></div>
+  <div class="sub-content">
+    <div class="card">
+      <div style="text-align:center;margin-bottom:16px;"><div style="font-size:18px;font-weight:800;color:var(--gold);" id="isCalHijri"></div><div style="font-size:13px;color:var(--text2);margin-top:4px;" id="isCalGreg"></div></div>
+      <div class="cal-grid"><div class="cal-dh">Sun</div><div class="cal-dh">Mon</div><div class="cal-dh">Tue</div><div class="cal-dh">Wed</div><div class="cal-dh">Thu</div><div class="cal-dh">Fri</div><div class="cal-dh">Sat</div></div>
+      <div class="cal-grid" id="isCalGrid" style="margin-top:6px;"></div>
+    </div>
+    <div class="card"><h3>🌟 Islamic Events</h3><div id="islamicEvents"></div></div>
+  </div>
+</div>
+
+<!-- ===== TASBEEH ===== -->
+<div id="tasbeehScreen" class="screen">
+  <div class="topbar"><button class="back-btn" onclick="go('mainScreen')">←</button><h2>📿 Tasbeeh Counter</h2><div></div></div>
+  <div class="sub-content">
+    <div class="tb-presets">
+      <button class="tb-preset active" onclick="setTasbeeh('سُبْحَانَ اللَّهِ',this)">SubhanAllah</button>
+      <button class="tb-preset" onclick="setTasbeeh('الْحَمْدُ لِلَّهِ',this)">Alhamdulillah</button>
+      <button class="tb-preset" onclick="setTasbeeh('اللَّهُ أَكْبَرُ',this)">Allahu Akbar</button>
+      <button class="tb-preset" onclick="setTasbeeh('لَا إِلَٰهَ إِلَّا اللَّهُ',this)">La ilaha illallah</button>
+      <button class="tb-preset" onclick="setTasbeeh('أَسْتَغْفِرُ اللَّهَ',this)">Astaghfirullah</button>
+    </div>
+    <div class="tb-count" id="tbCount">0</div>
+    <div class="tb-name-ar" id="tbNameAr">سُبْحَانَ اللَّهِ</div>
+    <div style="text-align:center;font-size:13px;color:var(--text2);margin-top:4px;">Target: <span id="tbTarget">33</span></div>
+    <button class="tb-big-btn" onclick="incTasbeeh()">📿</button>
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button class="btn-s" onclick="resetTasbeeh()" style="flex:1;">🔄 Reset</button>
+      <button onclick="changeTbTarget()" style="background:linear-gradient(135deg,var(--gold),#ff9500);border:none;border-radius:14px;padding:13px;flex:1;color:#333;font-size:14px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">🎯 Target: <span id="tbTargetBtn">33</span></button>
+    </div>
+    <div class="card" style="margin-top:16px;"><h3>📊 Today</h3><div id="tbLog"></div></div>
+  </div>
+</div>
+
+<!-- ===== QUOTES ===== -->
+<div id="quotesScreen" class="screen">
+  <div class="topbar"><button class="back-btn" onclick="go('mainScreen')">←</button><h2>✨ Islamic Quotes</h2><div></div></div>
+  <div class="sub-content">
+    <div class="quote-hero"><div class="q-ar" id="qAr"></div><div class="q-txt" id="qTxt"></div><div class="q-src" id="qSrc"></div></div>
+    <button class="btn-g" onclick="shareQuote()">📤 Share Quote</button>
+    <button class="btn-p" onclick="nextQuote()">🔄 Next Quote</button>
+    <div class="card" style="margin-top:14px;"><div class="trow"><label>📲 Daily Quote Notification</label><label class="toggle"><input type="checkbox" id="dailyQuoteToggle" onchange="localStorage.setItem('dailyQuote',this.checked)"><span class="slider"></span></label></div></div>
+  </div>
+</div>
+
+<!-- ===== REMINDERS ===== -->
+<div id="reminderScreen" class="screen">
+  <div class="topbar"><button class="back-btn" onclick="go('mainScreen')">←</button><h2>💊 Reminders</h2><button class="back-btn" onclick="openReminderModal()" style="font-size:28px;color:var(--accent);">+</button></div>
+  <div class="sub-content"><div id="reminderList"><div class="empty"><div class="ei">🔔</div><p>No reminders yet.<br>Tap + to add!</p></div></div></div>
+</div>
+<div class="modal-ov" id="reminderModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>➕ Add Reminder</h3>
+    <div class="fg"><label>Type</label><select id="rType" style="width:100%;background:var(--bg2);border:1px solid rgba(124,107,255,.4);border-radius:12px;padding:12px;color:var(--text);font-family:'Poppins',sans-serif;"><option value="medicine">💊 Medicine</option><option value="water">💧 Water</option><option value="sleep">😴 Sleep</option><option value="birthday">🎂 Birthday</option><option value="anniversary">💍 Anniversary</option><option value="meeting">📅 Meeting</option><option value="custom">📌 Custom</option></select></div>
+    <div class="fg"><label>Title</label><input type="text" id="rTitle" placeholder="Take medicine, Mom's birthday..."></div>
+    <div class="fg"><label>Time</label><input type="time" id="rTime" value="08:00"></div>
+    <div class="fg"><label>Date (optional)</label><input type="date" id="rDate"></div>
+    <div class="fg"><label>Repeat</label><select id="rRepeat" style="width:100%;background:var(--bg2);border:1px solid rgba(124,107,255,.4);border-radius:12px;padding:12px;color:var(--text);font-family:'Poppins',sans-serif;"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="once">Once</option></select></div>
+    <button class="btn-p" onclick="saveReminder()">✅ Save</button>
+    <button class="btn-s" onclick="document.getElementById('reminderModal').classList.remove('active')">Cancel</button>
+  </div>
+</div>
+
+<!-- ===== WATER ===== -->
+<div id="waterScreen" class="screen">
+  <div class="topbar"><button class="back-btn" onclick="go('mainScreen')">←</button><h2>💧 Water Reminder</h2><div></div></div>
+  <div class="sub-content">
+    <div class="water-hero">
+      <div style="font-size:60px;">💧</div>
+      <div class="water-count" id="waterCount">0 / 8</div>
+      <div style="font-size:13px;color:var(--text2);">glasses today</div>
+      <div class="water-bar-wrap"><div class="water-bar" id="waterBar" style="width:0%;"></div></div>
+    </div>
+    <button class="btn-p" onclick="addWater()">💧 Add Glass of Water</button>
+    <button class="btn-s" onclick="resetWater()">🔄 Reset Today</button>
+    <div class="card" style="margin-top:14px;"><div class="trow"><label>Remind every 2 hours</label><label class="toggle"><input type="checkbox" id="waterRemToggle"><span class="slider"></span></label></div><div style="font-size:12px;color:var(--text2);margin-top:8px;">Daily goal: 8 glasses (2 liters)</div></div>
+  </div>
+</div>
+
+<!-- ===== MY CALENDAR ===== -->
+<div id="calendarScreen" class="screen">
+  <div class="topbar"><button class="back-btn" onclick="go('mainScreen')">←</button><h2>📆 My Calendar</h2><button class="back-btn" onclick="openEventModal()" style="font-size:28px;color:var(--accent);">+</button></div>
+  <div class="sub-content">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <button onclick="prevMonth()" style="background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;">◀</button>
+        <div style="font-size:16px;font-weight:800;" id="calMonthYear"></div>
+        <button onclick="nextMonth()" style="background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;">▶</button>
+      </div>
+      <div class="cal-grid"><div class="cal-dh">Sun</div><div class="cal-dh">Mon</div><div class="cal-dh">Tue</div><div class="cal-dh">Wed</div><div class="cal-dh">Thu</div><div class="cal-dh">Fri</div><div class="cal-dh">Sat</div></div>
+      <div class="cal-grid" id="myCalGrid" style="margin-top:6px;"></div>
+    </div>
+    <div class="card"><h3>📅 Upcoming Events</h3><div id="eventList"></div></div>
+  </div>
+</div>
+<div class="modal-ov" id="eventModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>📅 Add Event</h3>
+    <div class="fg"><label>Title</label><input type="text" id="evTitle" placeholder="Meeting, Birthday..."></div>
+    <div class="fg"><label>Date</label><input type="date" id="evDate"></div>
+    <div class="fg"><label>Time</label><input type="time" id="evTime" value="09:00"></div>
+    <div class="fg"><label>Note</label><textarea id="evNote" rows="2" placeholder="Optional note..."></textarea></div>
+    <button class="btn-p" onclick="saveEvent()">✅ Save Event</button>
+    <button class="btn-s" onclick="document.getElementById('eventModal').classList.remove('active')">Cancel</button>
+  </div>
+</div>
+
+<!-- ===== STOPWATCH ===== -->
+<div id="stopwatchScreen" class="screen">
+  <div class="topbar"><button class="back-btn" onclick="go('mainScreen')">←</button><h2>⏱️ Stop Watch</h2><div></div></div>
+  <div class="sub-content">
+    <div class="big-display" id="swTime">00:00:00.0</div>
+    <div class="circle-btns">
+      <button class="circle-btn neutral" onclick="swReset()">🔄</button>
+      <button class="circle-btn go" id="swBtn" onclick="swToggle()">▶️</button>
+      <button class="circle-btn neutral" onclick="swLap()">🏁</button>
+    </div>
+    <div style="margin-top:20px;"><div class="stitle">Laps</div><div id="lapList"></div></div>
+  </div>
+</div>
+
+<!-- ===== TIMER ===== -->
+<div id="timerScreen" class="screen">
+  <div class="topbar"><button class="back-btn" onclick="go('mainScreen')">←</button><h2>⏳ Countdown Timer</h2><div></div></div>
+  <div class="sub-content">
+    <div class="preset-row">
+      <button class="preset-btn" onclick="setTimer(1)">1 min</button><button class="preset-btn" onclick="setTimer(3)">3 min</button>
+      <button class="preset-btn" onclick="setTimer(5)">5 min</button><button class="preset-btn" onclick="setTimer(10)">10 min</button>
+      <button class="preset-btn" onclick="setTimer(15)">15 min</button><button class="preset-btn" onclick="setTimer(30)">30 min</button>
+      <button class="preset-btn" onclick="setTimer(60)">1 hr</button>
+    </div>
+    <div class="card"><div class="fg"><label>Custom (minutes)</label><input type="number" id="customTimer" placeholder="Enter minutes" min="1"></div><button class="btn-p" onclick="setCustomTimer()">Set Timer</button></div>
+    <div class="big-display" id="timerDisplay">00:00:00</div>
+    <div style="display:flex;gap:12px;">
+      <button class="btn-p" id="timerBtn" onclick="timerToggle()" style="flex:1;">▶️ Start</button>
+      <button class="btn-s" onclick="timerReset()" style="flex:1;">🔄 Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SLEEP ===== -->
+<div id="sleepScreen" class="screen">
+  <div class="topbar"><button class="back-btn" onclick="go('mainScreen')">←</button><h2>😴 Sleep Tracker</h2><div></div></div>
+  <div class="sub-content">
+    <div class="sleep-hero"><div style="font-size:64px;">😴</div><div style="font-size:16px;font-weight:700;margin-top:10px;" id="sleepStatus">Ready to Track</div><div class="sleep-dur" id="sleepDur">--:--:--</div><div style="font-size:12px;color:var(--text2);" id="sleepStartTime"></div></div>
+    <div style="display:flex;gap:12px;"><button class="btn-p" onclick="sleepStart()" style="flex:1;" id="sleepStartBtn">🌙 Sleep</button><button class="btn-s" onclick="sleepStop()" style="flex:1;" id="sleepStopBtn" disabled>☀️ Wake Up</button></div>
+    <div class="card" style="margin-top:16px;"><h3>📊 Sleep History</h3><div id="sleepHistory"></div></div>
+  </div>
+</div>
+
+<!-- ===== HISTORY ===== -->
+<div id="historyScreen" class="screen">
+  <div class="topbar"><button class="back-btn" onclick="go('mainScreen')">←</button><h2>📊 Alarm History</h2><div></div></div>
+  <div class="sub-content"><div id="historyList"><div class="empty"><div class="ei">📊</div><p>No history yet.</p></div></div></div>
+</div>
+
+<!-- ===== SETTINGS ===== -->
+<div id="settingsScreen" class="screen">
+  <div class="topbar"><button class="back-btn" onclick="go('mainScreen')">←</button><h2>⚙️ Settings</h2><div></div></div>
+  <div class="sub-content">
+    <div class="stitle">🔔 Notifications</div>
+    <div class="set-item"><div class="set-label"><h4>Allow Notifications</h4><p>Alarms, prayers & reminders</p></div><button onclick="reqNotif()" id="notifBtn" style="background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;padding:9px 16px;color:white;cursor:pointer;font-size:13px;font-weight:700;font-family:'Poppins',sans-serif;">Enable</button></div>
+    <div class="stitle">🌍 Language</div>
+    <div class="card"><div class="lang-grid">
+      <button class="lang-btn active" onclick="setLang('en',this)">English</button>
+      <button class="lang-btn" onclick="setLang('ur',this)">اردو</button>
+      <button class="lang-btn" onclick="setLang('ar',this)">عربي</button>
+      <button class="lang-btn" onclick="setLang('hi',this)">हिंदी</button>
+      <button class="lang-btn" onclick="setLang('tr',this)">Türkçe</button>
+      <button class="lang-btn" onclick="setLang('fr',this)">Français</button>
+      <button class="lang-btn" onclick="setLang('ms',this)">Melayu</button>
+      <button class="lang-btn" onclick="setLang('id',this)">Indonesia</button>
+    </div></div>
+    <div class="stitle">🕌 City (Prayer Times & Weather)</div>
+    <div class="set-item"><div class="set-label"><h4>Select City</h4><p>Affects prayer times & weather</p></div>
+      <select class="sel" id="settingCity" onchange="saveCity()">
+        <optgroup label="🇵🇰 Pakistan"><option value="Karachi,PK">Karachi</option><option value="Lahore,PK">Lahore</option><option value="Islamabad,PK">Islamabad</option><option value="Multan,PK">Multan</option><option value="Peshawar,PK">Peshawar</option></optgroup>
+        <optgroup label="🇸🇦 Saudi Arabia"><option value="Makkah,SA">Makkah</option><option value="Riyadh,SA">Riyadh</option><option value="Jeddah,SA">Jeddah</option></optgroup>
+        <optgroup label="🇦🇪 UAE"><option value="Dubai,AE">Dubai</option></optgroup>
+        <optgroup label="🇬🇧 UK"><option value="London,GB">London</option><option value="Birmingham,GB">Birmingham</option></optgroup>
+        <optgroup label="🇺🇸 USA"><option value="New York,US">New York</option><option value="Houston,US">Houston</option></optgroup>
+        <optgroup label="🇲🇾 Malaysia"><option value="Kuala Lumpur,MY">Kuala Lumpur</option></optgroup>
+        <optgroup label="🇮🇩 Indonesia"><option value="Jakarta,ID">Jakarta</option></optgroup>
+      </select>
+    </div>
+    <div class="stitle">ℹ️ About</div>
+    <div class="set-item"><div class="set-label"><h4>AlarmMaster Pro v2.0</h4><p>Complete Islamic Alarm App</p></div><span style="font-size:24px;">☪️</span></div>
+    <div class="set-item"><div class="set-label"><h4>Clear All Data</h4><p>Reset everything</p></div><button onclick="if(confirm('Reset all data?')){localStorage.clear();location.reload();}" style="background:var(--red);border:none;border-radius:10px;padding:9px 16px;color:white;cursor:pointer;font-size:13px;font-weight:700;font-family:'Poppins',sans-serif;">Reset</button></div>
+  </div>
+</div>
+
+<!-- ALARM RING -->
+<div class="ring-ov" id="ringOv">
+  <div class="ring-icon">⏰</div>
+  <div class="ring-clock" id="ringTime">07:00</div>
+  <div class="ring-lbl" id="ringLabel">Wake Up!</div>
+  <div class="ring-btns">
+    <button class="btn-snooze" onclick="snoozeAlarm()">😴 Snooze</button>
+    <button class="btn-dismiss" id="dismissBtn" onclick="dismissAlarm()">✅ Dismiss</button>
+  </div>
+</div>
+
+<!-- MATH -->
+<div class="math-ov" id="mathOv">
+  <div style="font-size:20px;color:var(--accent2);font-weight:800;">🧮 Solve to Dismiss!</div>
+  <div class="diff-row" style="margin-top:14px;">
+    <button class="diff-btn active" onclick="setMathDiff('easy',this)">Easy</button>
+    <button class="diff-btn" onclick="setMathDiff('medium',this)">Medium</button>
+    <button class="diff-btn" onclick="setMathDiff('hard',this)">Hard</button>
+  </div>
+  <div class="math-q" id="mathQ">5 + 3 = ?</div>
+  <input type="number" class="math-inp" id="mathAns" placeholder="Your answer" onkeydown="if(event.key==='Enter')checkMath()">
+  <button class="btn-p" style="max-width:280px;margin-top:0;" onclick="checkMath()">✅ Submit Answer</button>
+  <div id="mathWrong" style="color:var(--red);margin-top:10px;font-size:14px;font-weight:600;"></div>
+</div>
+
+<!-- QUIZ -->
+<div class="quiz-ov" id="quizOv">
+  <div style="font-size:44px;margin-bottom:10px;">📖</div>
+  <div style="font-size:15px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:1px;">Daily Hadith Quiz</div>
+  <div class="quiz-q" id="quizQ"></div>
+  <div class="quiz-opts" id="quizOpts"></div>
+  <div style="font-size:16px;margin-top:16px;font-weight:700;" id="quizRes"></div>
+  <button class="btn-s" id="quizCloseBtn" style="max-width:300px;margin-top:16px;display:none;" onclick="document.getElementById('quizOv').classList.remove('active')">Continue to App ➡️</button>
+</div>
+<script>
+const NAMES=[{n:1,ar:"الرَّحْمَنُ",tr:"Ar-Rahman",en:"The Most Gracious"},{n:2,ar:"الرَّحِيمُ",tr:"Ar-Rahim",en:"The Most Merciful"},{n:3,ar:"الْمَلِكُ",tr:"Al-Malik",en:"The King"},{n:4,ar:"الْقُدُّوسُ",tr:"Al-Quddus",en:"The Most Holy"},{n:5,ar:"السَّلاَمُ",tr:"As-Salam",en:"The Source of Peace"},{n:6,ar:"الْمُؤْمِنُ",tr:"Al-Mumin",en:"The Guardian of Faith"},{n:7,ar:"الْمُهَيْمِنُ",tr:"Al-Muhaymin",en:"The Protector"},{n:8,ar:"الْعَزِيزُ",tr:"Al-Aziz",en:"The Almighty"},{n:9,ar:"الْجَبَّارُ",tr:"Al-Jabbar",en:"The Compeller"},{n:10,ar:"الْمُتَكَبِّرُ",tr:"Al-Mutakabbir",en:"The Supreme"},{n:11,ar:"الْخَالِقُ",tr:"Al-Khaliq",en:"The Creator"},{n:12,ar:"الْبَارِئُ",tr:"Al-Bari",en:"The Evolver"},{n:13,ar:"الْمُصَوِّرُ",tr:"Al-Musawwir",en:"The Fashioner"},{n:14,ar:"الْغَفَّارُ",tr:"Al-Ghaffar",en:"The Repeatedly Forgiving"},{n:15,ar:"الْقَهَّارُ",tr:"Al-Qahhar",en:"The Subduer"},{n:16,ar:"الْوَهَّابُ",tr:"Al-Wahhab",en:"The Bestower"},{n:17,ar:"الرَّزَّاقُ",tr:"Ar-Razzaq",en:"The Provider"},{n:18,ar:"الْفَتَّاحُ",tr:"Al-Fattah",en:"The Opener"},{n:19,ar:"اَلْعَلِيْمُ",tr:"Al-Alim",en:"The All-Knowing"},{n:20,ar:"الْقَابِضُ",tr:"Al-Qabid",en:"The Withholder"},{n:21,ar:"الْبَاسِطُ",tr:"Al-Basit",en:"The Extender"},{n:22,ar:"الْخَافِضُ",tr:"Al-Khafid",en:"The Reducer"},{n:23,ar:"الرَّافِعُ",tr:"Ar-Rafi",en:"The Exalter"},{n:24,ar:"الْمُعِزُّ",tr:"Al-Muizz",en:"The Honourer"},{n:25,ar:"المُذِلُّ",tr:"Al-Muzill",en:"The Dishonourer"},{n:26,ar:"السَّمِيعُ",tr:"As-Sami",en:"The All-Hearing"},{n:27,ar:"الْبَصِيرُ",tr:"Al-Basir",en:"The All-Seeing"},{n:28,ar:"الْحَكَمُ",tr:"Al-Hakam",en:"The Judge"},{n:29,ar:"الْعَدْلُ",tr:"Al-Adl",en:"The Just"},{n:30,ar:"اللَّطِيفُ",tr:"Al-Latif",en:"The Subtle One"},{n:31,ar:"الْخَبِيرُ",tr:"Al-Khabir",en:"The Aware"},{n:32,ar:"الْحَلِيمُ",tr:"Al-Halim",en:"The Forbearing"},{n:33,ar:"الْعَظِيمُ",tr:"Al-Azim",en:"The Magnificent"},{n:34,ar:"الْغَفُورُ",tr:"Al-Ghafur",en:"The Forgiving"},{n:35,ar:"الشَّكُورُ",tr:"Ash-Shakur",en:"The Appreciative"},{n:36,ar:"الْعَلِيُّ",tr:"Al-Ali",en:"The Most High"},{n:37,ar:"الْكَبِيرُ",tr:"Al-Kabir",en:"The Most Great"},{n:38,ar:"الْحَفِيظُ",tr:"Al-Hafiz",en:"The Preserver"},{n:39,ar:"المُقِيت",tr:"Al-Muqit",en:"The Sustainer"},{n:40,ar:"الْحسِيبُ",tr:"Al-Hasib",en:"The Reckoner"},{n:41,ar:"الْجَلِيلُ",tr:"Al-Jalil",en:"The Majestic"},{n:42,ar:"الْكَرِيمُ",tr:"Al-Karim",en:"The Generous"},{n:43,ar:"الرَّقِيبُ",tr:"Ar-Raqib",en:"The Watchful"},{n:44,ar:"الْمُجِيبُ",tr:"Al-Mujib",en:"The Responsive"},{n:45,ar:"الْوَاسِعُ",tr:"Al-Wasi",en:"The All-Encompassing"},{n:46,ar:"الْحَكِيمُ",tr:"Al-Hakim",en:"The Wise"},{n:47,ar:"الْوَدُودُ",tr:"Al-Wadud",en:"The Loving"},{n:48,ar:"الْمَجِيدُ",tr:"Al-Majid",en:"The Glorious"},{n:49,ar:"الْبَاعِثُ",tr:"Al-Baith",en:"The Resurrector"},{n:50,ar:"الشَّهِيدُ",tr:"Ash-Shahid",en:"The Witness"},{n:51,ar:"الْحَقُّ",tr:"Al-Haqq",en:"The Truth"},{n:52,ar:"الْوَكِيلُ",tr:"Al-Wakil",en:"The Trustee"},{n:53,ar:"الْقَوِيُّ",tr:"Al-Qawi",en:"The Most Strong"},{n:54,ar:"الْمَتِينُ",tr:"Al-Matin",en:"The Firm"},{n:55,ar:"الْوَلِيُّ",tr:"Al-Wali",en:"The Protecting Friend"},{n:56,ar:"الْحَمِيدُ",tr:"Al-Hamid",en:"The Praiseworthy"},{n:57,ar:"الْمُحْصِيُ",tr:"Al-Muhsi",en:"The Counter"},{n:58,ar:"الْمُبْدِئُ",tr:"Al-Mubdi",en:"The Originator"},{n:59,ar:"الْمُعِيدُ",tr:"Al-Muid",en:"The Restorer"},{n:60,ar:"الْمُحْيِي",tr:"Al-Muhyi",en:"The Giver of Life"},{n:61,ar:"اَلْمُمِيتُ",tr:"Al-Mumit",en:"The Taker of Life"},{n:62,ar:"الْحَيُّ",tr:"Al-Hayy",en:"The Ever-Living"},{n:63,ar:"الْقَيُّومُ",tr:"Al-Qayyum",en:"The Self-Subsisting"},{n:64,ar:"الْوَاجِدُ",tr:"Al-Wajid",en:"The Finder"},{n:65,ar:"الْمَاجِدُ",tr:"Al-Majid",en:"The Noble"},{n:66,ar:"الْوَاحِدُ",tr:"Al-Wahid",en:"The One"},{n:67,ar:"اَلاَحَدُ",tr:"Al-Ahad",en:"The Unique"},{n:68,ar:"الصَّمَدُ",tr:"As-Samad",en:"The Eternal"},{n:69,ar:"الْقَادِرُ",tr:"Al-Qadir",en:"The Capable"},{n:70,ar:"الْمُقْتَدِرُ",tr:"Al-Muqtadir",en:"The Powerful"},{n:71,ar:"الْمُقَدِّمُ",tr:"Al-Muqaddim",en:"The Expediter"},{n:72,ar:"الْمُؤَخِّرُ",tr:"Al-Muakhkhir",en:"The Delayer"},{n:73,ar:"الأوَّلُ",tr:"Al-Awwal",en:"The First"},{n:74,ar:"الآخِرُ",tr:"Al-Akhir",en:"The Last"},{n:75,ar:"الظَّاهِرُ",tr:"Az-Zahir",en:"The Manifest"},{n:76,ar:"الْبَاطِنُ",tr:"Al-Batin",en:"The Hidden"},{n:77,ar:"الْوَالِي",tr:"Al-Wali",en:"The Governor"},{n:78,ar:"الْمُتَعَالِي",tr:"Al-Mutaali",en:"The Self Exalted"},{n:79,ar:"الْبَرُّ",tr:"Al-Barr",en:"The Source of Goodness"},{n:80,ar:"التَّوَّابُ",tr:"At-Tawwab",en:"The Ever-Returning"},{n:81,ar:"الْمُنْتَقِمُ",tr:"Al-Muntaqim",en:"The Avenger"},{n:82,ar:"العَفُوُّ",tr:"Al-Afuw",en:"The Pardoner"},{n:83,ar:"الرَّؤُوفُ",tr:"Ar-Rauf",en:"The Compassionate"},{n:84,ar:"مَالِكُ الْمُلْكِ",tr:"Malik-ul-Mulk",en:"Owner of All Sovereignty"},{n:85,ar:"ذُوالْجَلاَلِ وَالإكْرَامِ",tr:"Dhul-Jalali wal-Ikram",en:"Lord of Majesty and Generosity"},{n:86,ar:"الْمُقْسِطُ",tr:"Al-Muqsit",en:"The Equitable"},{n:87,ar:"الْجَامِعُ",tr:"Al-Jami",en:"The Gatherer"},{n:88,ar:"الْغَنِيُّ",tr:"Al-Ghani",en:"The Self-Sufficient"},{n:89,ar:"الْمُغْنِي",tr:"Al-Mughni",en:"The Enricher"},{n:90,ar:"اَلْمَانِعُ",tr:"Al-Mani",en:"The Withholder"},{n:91,ar:"الضَّارَّ",tr:"Ad-Darr",en:"The Distresser"},{n:92,ar:"النَّافِعُ",tr:"An-Nafi",en:"The Propitious"},{n:93,ar:"النُّورُ",tr:"An-Nur",en:"The Light"},{n:94,ar:"الْهَادِي",tr:"Al-Hadi",en:"The Guide"},{n:95,ar:"الْبَدِيعُ",tr:"Al-Badi",en:"The Incomparable Originator"},{n:96,ar:"اَلْبَاقِي",tr:"Al-Baqi",en:"The Ever-Enduring"},{n:97,ar:"الْوَارِثُ",tr:"Al-Warith",en:"The Inheritor"},{n:98,ar:"الرَّشِيدُ",tr:"Ar-Rashid",en:"The Guide to the Right Path"},{n:99,ar:"الصَّبُورُ",tr:"As-Sabur",en:"The Patient"}];
+const HADITHS=[{ar:"إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ",en:"Actions are judged by their intentions.",src:"Bukhari & Muslim",q:"What are actions judged by?",opts:["Intentions","Results","Effort","Time"],ans:0},{ar:"الْمُسْلِمُ مَنْ سَلِمَ الْمُسْلِمُونَ مِنْ لِسَانِهِ وَيَدِهِ",en:"A Muslim is one from whose tongue and hands other Muslims are safe.",src:"Bukhari",q:"A Muslim keeps others safe from his?",opts:["Tongue and hands","Eyes","Heart","Home"],ans:0},{ar:"خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ",en:"The best of you are those who learn and teach the Quran.",src:"Bukhari",q:"Who are the best among Muslims?",opts:["Those who pray most","Those who fast","Those who learn and teach Quran","Those who give charity"],ans:2},{ar:"الدِّينُ النَّصِيحَةُ",en:"Religion is sincerity.",src:"Muslim",q:"What is religion according to this hadith?",opts:["Prayer","Fasting","Sincerity","Charity"],ans:2},{ar:"مَنْ لا يَرْحَمُ لا يُرْحَمُ",en:"He who does not show mercy will not be shown mercy.",src:"Bukhari",q:"Who will not be shown mercy?",opts:["Those who don't pray","Those who don't show mercy","Those who don't fast","Those who lie"],ans:1},{ar:"الْجَنَّةُ تَحْتَ أَقْدَامِ الأُمَّهَاتِ",en:"Paradise lies at the feet of mothers.",src:"Ibn Majah",q:"Where does Paradise lie?",opts:["In the sky","At the feet of mothers","In Makkah","In the heart"],ans:1},{ar:"كُلُّ مَعْرُوفٍ صَدَقَةٌ",en:"Every act of goodness is charity.",src:"Bukhari",q:"What is every act of goodness?",opts:["A prayer","Charity","A fast","A sin"],ans:1},{ar:"طَلَبُ الْعِلْمِ فَرِيضَةٌ عَلَى كُلِّ مُسْلِمٍ",en:"Seeking knowledge is an obligation upon every Muslim.",src:"Ibn Majah",q:"Seeking knowledge is an obligation on whom?",opts:["Only men","Only scholars","Every Muslim","Only adults"],ans:2},{ar:"خَيْرُ النَّاسِ أَنْفَعُهُمْ لِلنَّاسِ",en:"The best people are those most beneficial to others.",src:"Tabarani",q:"The best people are most?",opts:["Wealthy","Beneficial to others","Religious","Famous"],ans:1},{ar:"الصَّبْرُ نِصْفُ الإِيمَانِ",en:"Patience is half of faith.",src:"Bayhaqi",q:"Patience is how much of faith?",opts:["All","One third","Half","One quarter"],ans:2}];
+const DUAS={Morning:[{title:"Upon waking up",ar:"الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ",tr:"تمام تعریفیں اللہ کے لیے جس نے ہمیں موت کے بعد زندہ کیا",en:"All praise for Allah who gave us life after taking it."},{title:"Morning remembrance",ar:"أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ وَالْحَمْدُ لِلَّهِ",tr:"ہم نے صبح کی اور اللہ کی بادشاہت نے صبح کی",en:"We have reached morning and sovereignty belongs to Allah."}],Evening:[{title:"Evening remembrance",ar:"أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ وَالْحَمْدُ لِلَّهِ",tr:"ہم نے شام کی اور اللہ کی بادشاہت نے شام کی",en:"We have reached evening and sovereignty belongs to Allah."},{title:"Evening protection",ar:"أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ",tr:"میں اللہ کے کامل کلمات سے مخلوق کے شر سے پناہ مانگتا ہوں",en:"I seek refuge in Allah's perfect words from evil of His creation."}],Eating:[{title:"Before eating",ar:"بِسْمِ اللَّهِ وَعَلَى بَرَكَةِ اللَّهِ",tr:"اللہ کے نام سے اور اللہ کی برکت پر",en:"In the name of Allah and with the blessings of Allah."},{title:"After eating",ar:"الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنَا وَسَقَانَا وَجَعَلَنَا مُسْلِمِينَ",tr:"شکر ہے اللہ کا جس نے کھلایا، پلایا اور مسلمان بنایا",en:"Praise Allah who fed us, gave us drink, and made us Muslims."},{title:"When forgot Bismillah",ar:"بِسْمِ اللَّهِ فِي أَوَّلِهِ وَآخِرِهِ",tr:"اللہ کے نام سے شروع میں بھی اور آخر میں بھی",en:"In the name of Allah at its beginning and its end."}],Travel:[{title:"Before travelling",ar:"سُبْحَانَ الَّذِي سَخَّرَ لَنَا هَذَا وَمَا كُنَّا لَهُ مُقْرِنِينَ",tr:"پاک ہے وہ جس نے ہمارے لیے اسے مسخر کیا",en:"Glory be to Him who subjected this to us."},{title:"Dua for journey",ar:"اللَّهُمَّ إِنَّا نَسْأَلُكَ فِي سَفَرِنَا هَذَا الْبِرَّ وَالتَّقْوَى",tr:"اے اللہ ہم اس سفر میں نیکی اور تقوی مانگتے ہیں",en:"O Allah, we ask for righteousness in this journey."}],Sleep:[{title:"Before sleeping",ar:"بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا",tr:"اے اللہ تیرے نام سے مرتا اور جیتا ہوں",en:"In Your name O Allah, I die and I live."},{title:"Ayat ul Kursi",ar:"اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ",tr:"اللہ وہ ہے جس کے سوا کوئی معبود نہیں",en:"Allah! There is no god but He, the Ever-Living."},{title:"Three Quls",ar:"قُلْ هُوَ اللَّهُ أَحَدٌ ۞ قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ ۞ قُلْ أَعُوذُ بِرَبِّ النَّاسِ",tr:"تینوں قل پڑھ کر ہاتھوں پر پھونک کر جسم پر پھیریں",en:"Recite Surah Ikhlas, Falaq and Nas, blow and wipe over body."}],Mosque:[{title:"Entering mosque",ar:"اللَّهُمَّ افْتَحْ لِي أَبْوَابَ رَحْمَتِكَ",tr:"اے اللہ میرے لیے رحمت کے دروازے کھول دے",en:"O Allah, open the doors of Your mercy for me."},{title:"Leaving mosque",ar:"اللَّهُمَّ إِنِّي أَسْأَلُكَ مِنْ فَضْلِكَ",tr:"اے اللہ میں تجھ سے تیرے فضل کا سوال کرتا ہوں",en:"O Allah, I ask You of Your grace."}],Rain:[{title:"When it rains",ar:"اللَّهُمَّ صَيِّبًا نَافِعًا",tr:"اے اللہ اسے نفع بخش بارش بنا",en:"O Allah, make it a beneficial rain."},{title:"After rain",ar:"مُطِرْنَا بِفَضْلِ اللَّهِ وَرَحْمَتِهِ",tr:"ہم پر اللہ کے فضل اور رحمت سے بارش ہوئی",en:"We have been given rain by grace and mercy of Allah."}],Parents:[{title:"Dua for parents",ar:"رَبِّ ارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا",tr:"اے رب ان پر رحم فرما جیسا انہوں نے مجھے بچپن میں پالا",en:"My Lord, have mercy on them as they raised me when young."},{title:"Forgiveness for parents",ar:"رَبِّ اغْفِرْ لِي وَلِوَالِدَيَّ",tr:"اے رب مجھے اور میرے والدین کو بخش دے",en:"My Lord, forgive me and my parents."}],Distress:[{title:"In times of distress",ar:"لَا إِلَٰهَ إِلَّا أَنْتَ سُبْحَانَكَ إِنِّي كُنْتُ مِنَ الظَّالِمِينَ",tr:"تیرے سوا کوئی معبود نہیں، میں ظالموں میں سے تھا",en:"There is no god but You, glory be to You, I was among the wrongdoers."},{title:"For anxiety and worry",ar:"اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ",tr:"اے اللہ میں غم اور پریشانی سے تیری پناہ مانگتا ہوں",en:"O Allah, I seek refuge in You from worry and grief."}]};
+const QUOTES=[{ar:"إِنَّ مَعَ الْعُسْرِ يُسْرًا",en:"Indeed, with hardship will come ease.",src:"Quran 94:6"},{ar:"وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا",en:"Whoever fears Allah, He will make for him a way out.",src:"Quran 65:2"},{ar:"حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ",en:"Allah is sufficient for us, and He is the best Disposer of affairs.",src:"Quran 3:173"},{ar:"وَلَا تَيْأَسُوا مِن رَّوْحِ اللَّهِ",en:"Do not despair of the mercy of Allah.",src:"Quran 12:87"},{ar:"إِنَّ اللَّهَ مَعَ الصَّابِرِينَ",en:"Indeed, Allah is with the patient.",src:"Quran 2:153"},{ar:"فَاذْكُرُونِي أَذْكُرْكُمْ",en:"Remember Me, and I will remember you.",src:"Quran 2:152"},{ar:"وَإِذَا سَأَلَكَ عِبَادِي عَنِّي فَإِنِّي قَرِيبٌ",en:"When My servants ask about Me, I am near.",src:"Quran 2:186"},{ar:"اللَّهُ نُورُ السَّمَاوَاتِ وَالْأَرْضِ",en:"Allah is the Light of the heavens and the earth.",src:"Quran 24:35"},{ar:"رَبِّ زِدْنِي عِلْمًا",en:"My Lord, increase me in knowledge.",src:"Quran 20:114"},{ar:"إِنَّ اللَّهَ لَا يُغَيِّرُ مَا بِقَوْمٍ حَتَّى يُغَيِّرُوا مَا بِأَنفُسِهِمْ",en:"Allah will not change a people's condition until they change themselves.",src:"Quran 13:11"},{ar:"وَبَشِّرِ الصَّابِرِينَ",en:"And give good tidings to the patient.",src:"Quran 2:155"},{ar:"وَهُوَ مَعَكُمْ أَيْنَ مَا كُنتُمْ",en:"He is with you wherever you are.",src:"Quran 57:4"}];
+const WC=[{city:"Karachi",country:"🇵🇰 Pakistan",tz:"Asia/Karachi"},{city:"Lahore",country:"🇵🇰 Pakistan",tz:"Asia/Karachi"},{city:"Dubai",country:"🇦🇪 UAE",tz:"Asia/Dubai"},{city:"Riyadh",country:"🇸🇦 Saudi Arabia",tz:"Asia/Riyadh"},{city:"Makkah",country:"🇸🇦 Saudi Arabia",tz:"Asia/Riyadh"},{city:"Istanbul",country:"🇹🇷 Turkey",tz:"Europe/Istanbul"},{city:"London",country:"🇬🇧 UK",tz:"Europe/London"},{city:"New York",country:"🇺🇸 USA",tz:"America/New_York"},{city:"Los Angeles",country:"🇺🇸 USA",tz:"America/Los_Angeles"},{city:"Toronto",country:"🇨🇦 Canada",tz:"America/Toronto"},{city:"Kuala Lumpur",country:"🇲🇾 Malaysia",tz:"Asia/Kuala_Lumpur"},{city:"Jakarta",country:"🇮🇩 Indonesia",tz:"Asia/Jakarta"},{city:"Cairo",country:"🇪🇬 Egypt",tz:"Africa/Cairo"},{city:"Dhaka",country:"🇧🇩 Bangladesh",tz:"Asia/Dhaka"},{city:"Delhi",country:"🇮🇳 India",tz:"Asia/Kolkata"},{city:"Sydney",country:"🇦🇺 Australia",tz:"Australia/Sydney"}];
+const ISEV={1:["1st - Islamic New Year","10th - Day of Ashura"],3:["12th - Mawlid al-Nabi ﷺ"],7:["27th - Isra and Mi'raj"],8:["15th - Shab-e-Barat"],9:["1st - Start of Ramadan","27th - Laylat al-Qadr"],10:["1st - Eid ul-Fitr 🎉"],12:["8th - Day of Arafah","10th - Eid ul-Adha 🎉"]};
+let alarms=JSON.parse(localStorage.getItem('alarms')||'[]'),alarmHistory=JSON.parse(localStorage.getItem('alarmHistory')||'[]'),sleepLog=JSON.parse(localStorage.getItem('sleepLog')||'[]'),reminders=JSON.parse(localStorage.getItem('reminders')||'[]'),myEvents=JSON.parse(localStorage.getItem('myEvents')||'[]'),prayerTimes={},currentAlarm=null,mathAns=0,mathDiff='easy',hadithIdx=0,quoteIdx=0,duaCat='Morning',swRunning=false,swStart=0,swElapsed=0,swInt=null,laps=[],timerRunning=false,timerSecs=0,timerInt=null,sleepSt=null,sleepInt=null,audioCtx=null,tbCount=0,tbTarget=33,tbAr='سُبْحَانَ اللَّهِ',tbLog=[],waterG=parseInt(localStorage.getItem('water')||'0'),myCalDate=new Date();
+function go(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');if(id==='namesScreen')renderNames('');if(id==='hadithScreen')showHadith();if(id==='duaScreen')renderDuas();if(id==='namazScreen')loadPrayers();if(id==='worldClockScreen')renderWC();if(id==='historyScreen')renderHistory();if(id==='islamicCalScreen')renderIslamicCal();if(id==='sleepScreen')renderSleepHist();if(id==='quotesScreen')showQuote();if(id==='reminderScreen')renderReminders();if(id==='calendarScreen')renderMyCal();if(id==='waterScreen')updateWater();if(id==='mainScreen')renderAlarms();}
+function showTab(tabId,btn){}
+function updateClock(){const now=new Date(),pad=n=>String(n).padStart(2,'0');let h=now.getHours(),m=now.getMinutes(),s=now.getSeconds(),ampm=h>=12?'PM':'AM';h=h%12||12;document.getElementById('clockHM').textContent=`${pad(h)}:${pad(m)}`;document.getElementById('clockAMPM').textContent=ampm;document.getElementById('clockSec').textContent=pad(s);const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],months=['January','February','March','April','May','June','July','August','September','October','November','December'];document.getElementById('clockDate').textContent=`${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;try{document.getElementById('hijriDate').textContent=new Intl.DateTimeFormat('en-u-ca-islamic',{day:'numeric',month:'long',year:'numeric'}).format(now);}catch(e){}checkAlarms(now);checkReminders(now);updatePrayerCD(now);}
+function toggleTheme(){document.body.style.filter=document.body.style.filter?'':'invert(1) hue-rotate(180deg)';}
+function reqNotif(){localStorage.setItem('notifAsked','1');document.getElementById('notifBarHome').style.display='none';if(!('Notification' in window)){alert('Notifications not supported in this browser.');return;}Notification.requestPermission().then(p=>{if(p==='granted'){document.getElementById('notifBtn').textContent='✅ Enabled';document.getElementById('notifBtn').style.background='var(--green)';notify('AlarmMaster Pro 🌙','Notifications enabled! Prayer & alarm alerts ready.');}});}
+function notify(t,b){try{if('Notification' in window&&Notification.permission==='granted')new Notification(t,{body:b});}catch(e){}}
+function openAlarmModal(){document.querySelectorAll('.day-btn').forEach(b=>b.classList.remove('selected'));document.getElementById('aTime').value='07:00';document.getElementById('aLabel').value='';document.getElementById('aSnooze').checked=true;document.getElementById('aMath').checked=false;document.getElementById('mathDiffRow').style.display='none';document.getElementById('alarmModal').classList.add('active');}
+document.getElementById('aMath').addEventListener('change',function(){document.getElementById('mathDiffRow').style.display=this.checked?'block':'none';});
+document.querySelectorAll('.day-btn').forEach(b=>b.addEventListener('click',()=>b.classList.toggle('selected')));
+function saveAlarm(){const a={id:Date.now(),time:document.getElementById('aTime').value,label:document.getElementById('aLabel').value||'Alarm',days:[...document.querySelectorAll('.day-btn.selected')].map(b=>parseInt(b.dataset.day)),snooze:document.getElementById('aSnooze').checked,math:document.getElementById('aMath').checked,diff:document.getElementById('aDiff').value,enabled:true};alarms.push(a);localStorage.setItem('alarms',JSON.stringify(alarms));document.getElementById('alarmModal').classList.remove('active');renderAlarms();updateNextAlarm();
+showAlarmTip();}
+
+function showAlarmTip(){
+  const tip=document.createElement('div');
+  tip.style.cssText='position:fixed;bottom:100px;left:16px;right:16px;background:linear-gradient(135deg,#1a1a35,#2a1a3a);border:1px solid rgba(124,107,255,.4);border-radius:16px;padding:14px 16px;z-index:300;display:flex;gap:10px;align-items:flex-start;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:slideUp .3s ease;';
+  tip.innerHTML=`<div style="font-size:24px;">💡</div><div><div style="font-size:13px;font-weight:700;color:#ffd700;margin-bottom:4px;">Alarm Tip</div><div style="font-size:12px;color:#aaaacc;line-height:1.5;">Keep app open & screen on for alarm to ring. ⏰</div></div><button onclick="this.parentElement.remove()" style="background:none;border:none;color:#aaa;font-size:18px;cursor:pointer;margin-left:auto;">✕</button>`;
+  document.body.appendChild(tip);
+  setTimeout(()=>{if(tip.parentElement)tip.remove();},5000);
+}
+function renderAlarms(){const el=document.getElementById('alarmList');if(!alarms.length){el.innerHTML='<div class="empty"><div class="ei">⏰</div><p>No alarms yet 😊<br>Tap + to add one</p></div>';return;}const dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];el.innerHTML=alarms.map((a,i)=>`<div class="alarm-item ${a.enabled?'':'disabled'}"><div><div class="alarm-time-big">${a.time}</div><div class="alarm-sub">${a.label}</div><div class="alarm-days-tag">${a.days.length?a.days.map(d=>dn[d]).join(' · '):'Once'} ${a.math?'🧮':''} ${a.snooze?'😴':''}</div></div><div style="display:flex;align-items:center;gap:12px;"><label class="toggle"><input type="checkbox" ${a.enabled?'checked':''} onchange="toggleAlarm(${i})"><span class="slider"></span></label><button onclick="delAlarm(${i})" style="background:none;border:none;color:var(--red);font-size:20px;cursor:pointer;">🗑️</button></div></div>`).join('');}
+function toggleAlarm(i){alarms[i].enabled=!alarms[i].enabled;localStorage.setItem('alarms',JSON.stringify(alarms));updateNextAlarm();}
+function delAlarm(i){alarms.splice(i,1);localStorage.setItem('alarms',JSON.stringify(alarms));renderAlarms();updateNextAlarm();}
+function updateNextAlarm(){const active=alarms.filter(a=>a.enabled);if(!active.length)return;const now=new Date();let best=null,bD=Infinity;active.forEach(a=>{const[h,m]=a.time.split(':').map(Number),t=new Date();t.setHours(h,m,0,0);if(t<=now)t.setDate(t.getDate()+1);const d=t-now;if(d<bD){bD=d;best=a;}});if(best)document.getElementById('hijriDate').textContent+=' · ⏰ '+best.time;}
+function checkAlarms(now){alarms.forEach(a=>{if(!a.enabled)return;const[h,m]=a.time.split(':').map(Number);if(now.getHours()===h&&now.getMinutes()===m&&now.getSeconds()===0&&(!a.days.length||a.days.includes(now.getDay())))triggerAlarm(a);});}
+function triggerAlarm(alarm){currentAlarm=alarm;playSound();document.getElementById('ringTime').textContent=alarm.time;document.getElementById('ringLabel').textContent=alarm.label;document.getElementById('ringOv').classList.add('active');document.getElementById('dismissBtn').onclick=alarm.math?()=>showMath(alarm.diff):dismissAlarm;logHist(alarm,'triggered');notify('⏰ '+alarm.label,'Time: '+alarm.time);}
+function snoozeAlarm(){stopSound();document.getElementById('ringOv').classList.remove('active');const t=new Date();t.setMinutes(t.getMinutes()+5);const pad=n=>String(n).padStart(2,'0');alarms.push({...currentAlarm,time:`${pad(t.getHours())}:${pad(t.getMinutes())}`,days:[],_s:true,id:Date.now()});localStorage.setItem('alarms',JSON.stringify(alarms));logHist(currentAlarm,'snoozed');}
+function dismissAlarm(){stopSound();document.getElementById('ringOv').classList.remove('active');document.getElementById('mathOv').classList.remove('active');if(currentAlarm&&currentAlarm._s){alarms=alarms.filter(a=>!a._s);localStorage.setItem('alarms',JSON.stringify(alarms));}logHist(currentAlarm,'dismissed');currentAlarm=null;}
+function logHist(a,action){if(!a)return;alarmHistory.unshift({time:a.time,label:a.label,action,date:new Date().toLocaleString()});if(alarmHistory.length>50)alarmHistory.pop();localStorage.setItem('alarmHistory',JSON.stringify(alarmHistory));}
+function playSound(){try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();function b(f,s,d){const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(0.4,audioCtx.currentTime+s);g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+s+d);o.start(audioCtx.currentTime+s);o.stop(audioCtx.currentTime+s+d);}for(let i=0;i<20;i++){b(880,i*.5,.2);b(660,i*.5+.25,.2);}}catch(e){}}
+function stopSound(){try{if(audioCtx)audioCtx.close();audioCtx=null;}catch(e){}}
+function showMath(d){mathDiff=d||'easy';genMath();document.getElementById('mathOv').classList.add('active');}
+function genMath(){const max={easy:10,medium:50,hard:100}[mathDiff],ops=['+','-','×'],op=ops[Math.floor(Math.random()*ops.length)];let a=Math.floor(Math.random()*max)+1,b=Math.floor(Math.random()*max)+1;if(op==='-'&&b>a)[a,b]=[b,a];mathAns=op==='+'?a+b:op==='-'?a-b:a*b;document.getElementById('mathQ').textContent=`${a} ${op} ${b} = ?`;document.getElementById('mathAns').value='';document.getElementById('mathWrong').textContent='';}
+function setMathDiff(d,btn){mathDiff=d;document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');genMath();}
+function checkMath(){if(parseInt(document.getElementById('mathAns').value)===mathAns)dismissAlarm();else{document.getElementById('mathWrong').textContent='❌ Wrong! Try again.';genMath();}}
+async function loadPrayers(){const val=document.getElementById('namazCitySelect').value||localStorage.getItem('city')||'Karachi,PK',parts=val.split(','),city=parts[0],country=parts[1]||'PK';const flags={PK:'🇵🇰',SA:'🇸🇦',AE:'🇦🇪',GB:'🇬🇧',US:'🇺🇸',CA:'🇨🇦',MY:'🇲🇾',ID:'🇮🇩',BD:'🇧🇩',IN:'🇮🇳',TR:'🇹🇷',EG:'🇪🇬',QA:'🇶🇦',AU:'🇦🇺'};document.getElementById('namazCityLabel').textContent=(flags[country]||'🌍')+' '+city;document.getElementById('namazMiniCity').textContent=city;document.getElementById('namazDateLabel').textContent=new Date().toDateString();try{const r=await fetch(`https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(city)}&country=${country}&method=1`),d=await r.json(),t=d.data.timings;prayerTimes={Fajr:t.Fajr,Dhuhr:t.Dhuhr,Asr:t.Asr,Maghrib:t.Maghrib,Isha:t.Isha};const icons={Fajr:'🌙',Dhuhr:'☀️',Asr:'⛅',Maghrib:'🌅',Isha:'⭐'},arabic={Fajr:'الفجر',Dhuhr:'الظهر',Asr:'العصر',Maghrib:'المغرب',Isha:'العشاء'},now=new Date(),nm=now.getHours()*60+now.getMinutes();let next=null;document.getElementById('prayerMiniRow').innerHTML=Object.entries(prayerTimes).map(([name,time])=>{const[h,m]=time.split(':').map(Number),isNext=!next&&h*60+m>nm;if(isNext)next={name,time};return`<div class="prayer-col ${isNext?'active-p':''}"><div class="p-icon">${icons[name]}</div><div class="p-name">${name}</div><div class="p-time">${time}</div></div>`;}).join('');let html='';Object.entries(prayerTimes).forEach(([name,time])=>{const[h,m]=time.split(':').map(Number),isN=!document.querySelector('.active-full')&&h*60+nm>nm;html+=`<div class="prayer-item-full ${next&&next.name===name?'active-prayer':''}"><div><div class="p-full-name">${icons[name]} ${name}</div><div class="p-full-ar">${arabic[name]}</div></div><div class="p-full-time">${time}</div></div>`;});document.getElementById('prayerList').innerHTML=html;if(next){document.getElementById('npName').textContent=next.name;document.getElementById('nextPrayerSub')&&(document.getElementById('nextPrayerSub').textContent=next.name);}else document.getElementById('npName').textContent='Fajr (Tomorrow)';}catch(e){document.getElementById('prayerList').innerHTML='<div class="empty"><p>Could not load. Check internet.</p></div>';}}
+function updatePrayerCD(now){if(!Object.keys(prayerTimes).length)return;const nm=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;let minD=Infinity;Object.values(prayerTimes).forEach(t=>{const[h,m]=t.split(':').map(Number);let d=h*60+m-nm;if(d<0)d+=24*60;if(d<minD)minD=d;});const ts=Math.floor(minD*60),pad=n=>String(n).padStart(2,'0'),el=document.getElementById('npCD');if(el)el.textContent=`${pad(Math.floor(ts/3600))}:${pad(Math.floor((ts%3600)/60))}:${pad(ts%60)}`;if(ts<30&&ts>28&&localStorage.getItem('azan')==='true')playAzan();}
+function playAzan(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[440,494,523,587,659,587,523,494,440].forEach((f,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(0.3,ctx.currentTime+i*.4);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*.4+.35);o.start(ctx.currentTime+i*.4);o.stop(ctx.currentTime+i*.4+.35);});}catch(e){}}
+function renderWC(){document.getElementById('worldClockList').innerHTML=WC.map(c=>{const t=new Date().toLocaleTimeString('en-US',{timeZone:c.tz,hour:'2-digit',minute:'2-digit',hour12:false}),date=new Date().toLocaleDateString('en-US',{timeZone:c.tz,weekday:'short',month:'short',day:'numeric'});return`<div class="wc-item"><div><div style="font-size:15px;font-weight:700;">${c.city}</div><div style="font-size:12px;color:var(--text2);">${c.country}</div></div><div style="text-align:right;"><div style="font-size:24px;font-weight:800;color:var(--accent);">${t}</div><div style="font-size:11px;color:var(--text2);">${date}</div></div></div>`;}).join('');}
+function renderNames(f){document.getElementById('namesList').innerHTML=NAMES.filter(n=>!f||n.tr.toLowerCase().includes(f.toLowerCase())||n.en.toLowerCase().includes(f.toLowerCase())).map(n=>`<div class="name-item"><div style="font-size:10px;color:var(--accent);font-weight:700;">${n.n} of 99</div><div class="name-ar">${n.ar}</div><div style="font-size:14px;font-weight:700;">${n.tr}</div><div style="font-size:12px;color:var(--text2);margin-top:3px;">${n.en}</div></div>`).join('');}
+function filterNames(v){renderNames(v);}
+function showHadith(){const h=HADITHS[hadithIdx];document.getElementById('hAr').textContent=h.ar;document.getElementById('hTxt').textContent=h.en;document.getElementById('hSrc').textContent='📚 '+h.src;}
+function nextHadith(){hadithIdx=(hadithIdx+1)%HADITHS.length;showHadith();}
+function shareHadith(){const h=HADITHS[hadithIdx],txt=`📖 Hadith\n\n${h.ar}\n\n"${h.en}"\n\n📚 ${h.src}\n\n🌙 AlarmMaster Pro`;if(navigator.share)navigator.share({title:'Daily Hadith',text:txt});else{navigator.clipboard.writeText(txt);alert('Copied!');}}
+function showQuiz(){const h=HADITHS[Math.floor(Math.random()*HADITHS.length)];document.getElementById('quizQ').textContent=h.q;document.getElementById('quizRes').textContent='';document.getElementById('quizCloseBtn').style.display='none';document.getElementById('quizOpts').innerHTML=h.opts.map((o,i)=>`<button class="quiz-opt" onclick="answerQuiz(${i},${h.ans},this)">${o}</button>`).join('');document.getElementById('quizOv').classList.add('active');}
+function answerQuiz(chosen,correct,btn){document.querySelectorAll('.quiz-opt').forEach((b,i)=>{b.disabled=true;if(i===correct)b.classList.add('correct');});btn.classList.add(chosen===correct?'correct':'wrong');document.getElementById('quizRes').textContent=chosen===correct?'✅ MashaAllah! Correct!':'❌ Wrong! Correct answer is highlighted.';document.getElementById('quizCloseBtn').style.display='block';}
+function renderDuas(){document.getElementById('duaCats').innerHTML=Object.keys(DUAS).map(c=>`<button class="cat-btn ${c===duaCat?'active':''}" onclick="selDuaCat('${c}',this)">${c}</button>`).join('');showDuas();}
+function selDuaCat(c,btn){duaCat=c;document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');showDuas();}
+function showDuas(){document.getElementById('duaList').innerHTML=(DUAS[duaCat]||[]).map(d=>`<div class="dua-card"><div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:10px;">🤲 ${d.title}</div><div class="dua-ar">${d.ar}</div><div style="font-size:12px;color:var(--text2);margin-top:8px;direction:rtl;text-align:right;">${d.tr}</div><div style="font-size:12px;color:var(--text2);margin-top:6px;font-style:italic;">${d.en}</div></div>`).join('');}
+function calcZakat(){const v=id=>parseFloat(document.getElementById(id).value)||0,total=v('zCash')+v('zGold')+v('zSilver')+v('zBiz')-v('zDebt'),el=document.getElementById('zakatRes');if(total>0){el.style.display='block';document.getElementById('zakatAmt').textContent='PKR '+Math.round(total*.025).toLocaleString();}else el.style.display='none';}
+function getQibla(){
+  const statusEl=document.getElementById('qiblaStatus');
+  const instrEl=document.getElementById('qiblaInstr');
+  statusEl.textContent='📍 Getting your location...';
+  if(!navigator.geolocation){statusEl.textContent='❌ Geolocation not supported.';return;}
+  navigator.geolocation.getCurrentPosition(function(pos){
+    const lat=pos.coords.latitude,lon=pos.coords.longitude;
+    // Calculate Qibla bearing from current location to Makkah
+    const mLat=21.3891*Math.PI/180,mLon=39.8579*Math.PI/180;
+    const uLat=lat*Math.PI/180,uLon=lon*Math.PI/180;
+    const dLon=mLon-uLon;
+    const y=Math.sin(dLon)*Math.cos(mLat);
+    const x=Math.cos(uLat)*Math.sin(mLat)-Math.sin(uLat)*Math.cos(mLat)*Math.cos(dLon);
+    let qiblaBearing=Math.atan2(y,x)*180/Math.PI;
+    qiblaBearing=(qiblaBearing+360)%360;
+    window._qiblaBearing=qiblaBearing;
+    document.getElementById('qiblaDeg').textContent=Math.round(qiblaBearing)+'° from North';
+    document.getElementById('qiblaCity').textContent='📍 '+lat.toFixed(3)+', '+lon.toFixed(3);
+    statusEl.textContent='✅ Location found! Now enabling compass...';
+    // Try device orientation
+    if(window.DeviceOrientationEvent){
+      if(typeof DeviceOrientationEvent.requestPermission==='function'){
+        DeviceOrientationEvent.requestPermission().then(perm=>{
+          if(perm==='granted')startCompass(qiblaBearing);
+          else staticQibla(qiblaBearing);
+        }).catch(()=>staticQibla(qiblaBearing));
+      } else {
+        startCompass(qiblaBearing);
+      }
+    } else {
+      staticQibla(qiblaBearing);
+    }
+  },function(err){
+    const msgs={1:'❌ Location permission denied. Please allow in browser settings.',2:'❌ Location unavailable.',3:'❌ Timeout. Try again.'};
+    statusEl.textContent=msgs[err.code]||'❌ Error getting location.';
+  },{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+}
+
+function startCompass(qiblaBearing){
+  const statusEl=document.getElementById('qiblaStatus');
+  const needle=document.getElementById('compassNeedle');
+  document.getElementById('qiblaStopBtn').style.display='block';
+  window._compassListener=function(e){
+    let heading=e.webkitCompassHeading||e.alpha;
+    if(e.webkitCompassHeading){
+      // iOS - webkitCompassHeading is already from North
+      heading=e.webkitCompassHeading;
+    } else if(e.alpha!==null){
+      // Android - alpha is rotation from North (0=North)
+      heading=360-e.alpha;
+    }
+    if(heading===null||heading===undefined)return;
+    const needleAngle=(qiblaBearing-heading+180);
+    needle.style.transform='translate(-50%,-50%) rotate('+needleAngle+'deg)';
+    const diff=Math.abs(((needleAngle%360)+360)%360);
+    const aligned=diff<15||diff>345;
+    statusEl.textContent=aligned?'✅ Facing Qibla! 🕋 Makkah Al-Mukarramah':'🔄 Rotate phone until 🕋 points up';
+    statusEl.style.color=aligned?'var(--green)':'var(--text2)';
+  };
+  window.addEventListener('deviceorientation',window._compassListener,true);
+  statusEl.textContent='🧭 Compass active! Rotate phone slowly...';
+}
+
+function staticQibla(qiblaBearing){
+  document.getElementById('compassNeedle').style.transform='translate(-50%,-50%) rotate('+(qiblaBearing+180)+'deg)';
+  document.getElementById('qiblaStatus').textContent='📌 Static direction shown. Face '+Math.round(qiblaBearing)+'° from North for Qibla.';
+  document.getElementById('qiblaInstr').textContent='Compass sensor not available. Use a physical compass to face '+Math.round(qiblaBearing)+'° from North.';
+}
+
+function stopQibla(){
+  if(window._compassListener){
+    window.removeEventListener('deviceorientation',window._compassListener,true);
+    window._compassListener=null;
+  }
+  document.getElementById('qiblaStopBtn').style.display='none';
+  document.getElementById('qiblaStatus').textContent='Compass stopped.';
+}
+function renderIslamicCal(){const now=new Date();try{document.getElementById('isCalHijri').textContent='🌙 '+new Intl.DateTimeFormat('en-u-ca-islamic',{day:'numeric',month:'long',year:'numeric'}).format(now);}catch(e){}document.getElementById('isCalGreg').textContent=now.toDateString();const first=new Date(now.getFullYear(),now.getMonth(),1),last=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();let html='';for(let i=0;i<first.getDay();i++)html+='<div></div>';for(let d=1;d<=last;d++){const isFri=new Date(now.getFullYear(),now.getMonth(),d).getDay()===5;html+=`<div class="cal-d ${d===now.getDate()?'today':''} ${isFri?'friday':''}">${d}</div>`;}document.getElementById('isCalGrid').innerHTML=html;const ev=ISEV[now.getMonth()+1]||[];document.getElementById('islamicEvents').innerHTML=ev.length?ev.map(e=>`<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px;color:var(--gold);font-weight:600;">🌟 ${e}</div>`).join(''):'<div style="color:var(--text2);font-size:13px;">No major Islamic events this month.</div>';}
+function incTasbeeh(){tbCount++;document.getElementById('tbCount').textContent=tbCount;if(navigator.vibrate)navigator.vibrate(50);if(tbCount===tbTarget){notify('📿 MashaAllah!',tbTarget+' '+tbAr+' completed!');setTimeout(()=>alert('MashaAllah! 🌙 '+tbTarget+' completed!'),100);}}
+function resetTasbeeh(){if(tbCount>0)tbLog.push({name:tbAr,count:tbCount,time:new Date().toLocaleTimeString()});tbCount=0;document.getElementById('tbCount').textContent=0;document.getElementById('tbLog').innerHTML=tbLog.slice(-5).reverse().map(l=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;"><span style="color:var(--text2);">${l.name}</span><span style="color:var(--gold);font-weight:700;">${l.count} — ${l.time}</span></div>`).join('');}
+function setTasbeeh(ar,btn){tbAr=ar;tbCount=0;document.getElementById('tbCount').textContent=0;document.getElementById('tbNameAr').textContent=ar;document.querySelectorAll('.tb-preset').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function changeTbTarget(){const t=prompt('Enter target (33, 99, 100...):',tbTarget);if(t&&!isNaN(t)){tbTarget=parseInt(t);document.getElementById('tbTarget').textContent=tbTarget;document.getElementById('tbTargetBtn').textContent=tbTarget;}}
+function showQuote(){const q=QUOTES[quoteIdx];document.getElementById('qAr').textContent=q.ar;document.getElementById('qTxt').textContent=q.en;document.getElementById('qSrc').textContent='📖 '+q.src;}
+function nextQuote(){quoteIdx=(quoteIdx+1)%QUOTES.length;showQuote();}
+function shareQuote(){const q=QUOTES[quoteIdx],txt=`✨ Islamic Quote\n\n${q.ar}\n\n"${q.en}"\n\n📖 ${q.src}\n\n🌙 AlarmMaster Pro`;if(navigator.share)navigator.share({title:'Islamic Quote',text:txt});else{navigator.clipboard.writeText(txt);alert('Copied!');}}
+function openReminderModal(){document.getElementById('reminderModal').classList.add('active');}
+function saveReminder(){const r={id:Date.now(),type:document.getElementById('rType').value,title:document.getElementById('rTitle').value||'Reminder',time:document.getElementById('rTime').value,date:document.getElementById('rDate').value,repeat:document.getElementById('rRepeat').value,enabled:true};reminders.push(r);localStorage.setItem('reminders',JSON.stringify(reminders));document.getElementById('reminderModal').classList.remove('active');renderReminders();}
+function renderReminders(){const el=document.getElementById('reminderList');if(!reminders.length){el.innerHTML='<div class="empty"><div class="ei">🔔</div><p>No reminders yet.<br>Tap + to add!</p></div>';return;}const icons={water:'💧',sleep:'😴',meeting:'📅',custom:'📌'};el.innerHTML=reminders.map((r,i)=>`<div class="rem-item"><div style="display:flex;align-items:center;gap:12px;"><span style="font-size:28px;">${icons[r.type]||'📌'}</span><div><div style="font-size:14px;font-weight:700;">${r.title}</div><div style="font-size:12px;color:var(--text2);">${r.time} · ${r.repeat}${r.date?' · '+r.date:''}</div></div></div><div style="display:flex;gap:10px;align-items:center;"><label class="toggle"><input type="checkbox" ${r.enabled?'checked':''} onchange="togRem(${i})"><span class="slider"></span></label><button onclick="delRem(${i})" style="background:none;border:none;color:var(--red);font-size:20px;cursor:pointer;">🗑️</button></div></div>`).join('');}
+function togRem(i){reminders[i].enabled=!reminders[i].enabled;localStorage.setItem('reminders',JSON.stringify(reminders));}
+function delRem(i){reminders.splice(i,1);localStorage.setItem('reminders',JSON.stringify(reminders));renderReminders();}
+function checkReminders(now){const pad=n=>String(n).padStart(2,'0'),cur=`${pad(now.getHours())}:${pad(now.getMinutes())}`;reminders.forEach(r=>{if(!r.enabled||r.time!==cur||now.getSeconds()!==0)return;const icons={water:'💧',sleep:'😴',meeting:'📅',custom:'📌'};playSound();notify(`${icons[r.type]||'📌'} ${r.title}`,`Reminder at ${r.time}`);});}
+function updateWater(){document.getElementById('waterCount').textContent=`${waterG} / 8`;document.getElementById('waterBar').style.width=`${Math.min(waterG/8*100,100)}%`;}
+function addWater(){if(waterG<8){waterG++;localStorage.setItem('water',waterG);updateWater();if(waterG===8){notify('💧 Water Goal Complete!','MashaAllah! 8 glasses done! 🎉');alert('🎉 MashaAllah! Daily water goal completed!');}}else alert('✅ Daily goal already completed!');}
+function resetWater(){waterG=0;localStorage.setItem('water',0);updateWater();}
+function renderMyCal(){const months=['January','February','March','April','May','June','July','August','September','October','November','December'];document.getElementById('calMonthYear').textContent=months[myCalDate.getMonth()]+' '+myCalDate.getFullYear();const first=new Date(myCalDate.getFullYear(),myCalDate.getMonth(),1),last=new Date(myCalDate.getFullYear(),myCalDate.getMonth()+1,0).getDate(),today=new Date();let html='';for(let i=0;i<first.getDay();i++)html+='<div></div>';for(let d=1;d<=last;d++){const isToday=d===today.getDate()&&myCalDate.getMonth()===today.getMonth()&&myCalDate.getFullYear()===today.getFullYear(),hasEv=myEvents.some(e=>new Date(e.date).getDate()===d&&new Date(e.date).getMonth()===myCalDate.getMonth());html+=`<div class="cal-d ${isToday?'today':''} ${hasEv?'has-event':''}">${d}${hasEv?'·':''}</div>`;}document.getElementById('myCalGrid').innerHTML=html;const up=myEvents.filter(e=>new Date(e.date)>=new Date()).sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,10);document.getElementById('eventList').innerHTML=up.length?up.map((e,i)=>`<div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06);"><div style="display:flex;justify-content:space-between;"><div><div style="font-size:14px;font-weight:700;">${e.title}</div><div style="font-size:12px;color:var(--text2);margin-top:3px;">${e.date} · ${e.time}${e.note?' · '+e.note:''}</div></div><button onclick="delEvent(${i})" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;">🗑️</button></div></div>`).join(''):'<div style="color:var(--text2);font-size:13px;">No upcoming events.</div>';}
+function prevMonth(){myCalDate.setMonth(myCalDate.getMonth()-1);renderMyCal();}
+function nextMonth(){myCalDate.setMonth(myCalDate.getMonth()+1);renderMyCal();}
+function openEventModal(){document.getElementById('evDate').value=new Date().toISOString().split('T')[0];document.getElementById('eventModal').classList.add('active');}
+function saveEvent(){myEvents.push({id:Date.now(),title:document.getElementById('evTitle').value||'Event',date:document.getElementById('evDate').value,time:document.getElementById('evTime').value,note:document.getElementById('evNote').value});localStorage.setItem('myEvents',JSON.stringify(myEvents));document.getElementById('eventModal').classList.remove('active');renderMyCal();}
+function delEvent(i){myEvents.splice(i,1);localStorage.setItem('myEvents',JSON.stringify(myEvents));renderMyCal();}
+function swToggle(){if(swRunning){swRunning=false;clearInterval(swInt);document.getElementById('swBtn').textContent='▶️';document.getElementById('swBtn').className='circle-btn go';}else{swRunning=true;swStart=Date.now()-swElapsed;swInt=setInterval(()=>{swElapsed=Date.now()-swStart;const ms=swElapsed,s=Math.floor(ms/1000),pad=n=>String(n).padStart(2,'0');document.getElementById('swTime').textContent=`${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}:${pad(s%60)}.${Math.floor((ms%1000)/100)}`;},100);document.getElementById('swBtn').textContent='⏸';document.getElementById('swBtn').className='circle-btn stop';}}
+function swReset(){clearInterval(swInt);swRunning=false;swElapsed=0;laps=[];document.getElementById('swTime').textContent='00:00:00.0';document.getElementById('swBtn').textContent='▶️';document.getElementById('swBtn').className='circle-btn go';document.getElementById('lapList').innerHTML='';}
+function swLap(){if(!swRunning)return;laps.push(swElapsed);const ms=swElapsed,s=Math.floor(ms/1000),pad=n=>String(n).padStart(2,'0'),t=`${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}:${pad(s%60)}.${Math.floor((ms%1000)/100)}`;document.getElementById('lapList').innerHTML=`<div class="lap-item"><span style="color:var(--accent);font-weight:700;">Lap ${laps.length}</span><span>${t}</span></div>`+document.getElementById('lapList').innerHTML;}
+function setTimer(m){timerSecs=m*60;updateTimerDisp();}
+function setCustomTimer(){const v=parseInt(document.getElementById('customTimer').value);if(v>0){timerSecs=v*60;updateTimerDisp();}}
+function timerToggle(){if(timerRunning){timerRunning=false;clearInterval(timerInt);document.getElementById('timerBtn').textContent='▶️ Start';}else if(timerSecs>0){timerRunning=true;timerInt=setInterval(()=>{timerSecs--;updateTimerDisp();if(timerSecs<=0){clearInterval(timerInt);timerRunning=false;document.getElementById('timerBtn').textContent='▶️ Start';playSound();notify('⏳ Timer Done!','Your countdown timer has finished!');}},1000);document.getElementById('timerBtn').textContent='⏸ Pause';}}
+function timerReset(){clearInterval(timerInt);timerRunning=false;timerSecs=0;updateTimerDisp();document.getElementById('timerBtn').textContent='▶️ Start';}
+function updateTimerDisp(){const h=Math.floor(timerSecs/3600),m=Math.floor((timerSecs%3600)/60),s=timerSecs%60,pad=n=>String(n).padStart(2,'0');document.getElementById('timerDisplay').textContent=`${pad(h)}:${pad(m)}:${pad(s)}`;}
+function sleepStart(){sleepSt=new Date();document.getElementById('sleepStatus').textContent='😴 Sleeping...';document.getElementById('sleepStartTime').textContent='Started: '+sleepSt.toLocaleTimeString();document.getElementById('sleepStartBtn').disabled=true;document.getElementById('sleepStopBtn').disabled=false;sleepInt=setInterval(()=>{const diff=new Date()-sleepSt,h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000),pad=n=>String(n).padStart(2,'0');document.getElementById('sleepDur').textContent=`${pad(h)}:${pad(m)}:${pad(s)}`;},1000);}
+function sleepStop(){clearInterval(sleepInt);const end=new Date(),diff=end-sleepSt,h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000);sleepLog.unshift({start:sleepSt.toLocaleTimeString(),end:end.toLocaleTimeString(),duration:`${h}h ${m}m`,date:sleepSt.toLocaleDateString()});if(sleepLog.length>30)sleepLog.pop();localStorage.setItem('sleepLog',JSON.stringify(sleepLog));document.getElementById('sleepStatus').textContent='☀️ Good Morning!';document.getElementById('sleepStartBtn').disabled=false;document.getElementById('sleepStopBtn').disabled=true;renderSleepHist();}
+function renderSleepHist(){document.getElementById('sleepHistory').innerHTML=sleepLog.slice(0,7).map(s=>`<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);"><div style="font-size:12px;color:var(--text2);">${s.date}</div><div style="font-size:13px;margin-top:2px;">${s.start} → ${s.end}</div><div style="font-size:15px;font-weight:700;color:var(--accent);margin-top:2px;">${s.duration}</div></div>`).join('')||'<div style="color:var(--text2);font-size:13px;">No sleep logs yet.</div>';}
+function renderHistory(){document.getElementById('historyList').innerHTML=alarmHistory.slice(0,30).map(h=>`<div style="background:var(--bg3);border-radius:16px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div><div style="font-size:18px;font-weight:800;">${h.time}</div><div style="font-size:12px;color:var(--text2);margin-top:2px;">${h.label} · ${h.date}</div></div><div style="font-size:20px;">${h.action==='dismissed'?'✅':h.action==='snoozed'?'😴':'⏰'}</div></div>`).join('')||'<div class="empty"><div class="ei">📊</div><p>No history yet.</p></div>';}
+function setLang(lang,btn){document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');localStorage.setItem('lang',lang);document.body.style.direction=['ar','ur'].includes(lang)?'rtl':'ltr';}
+function saveCity(){localStorage.setItem('city',document.getElementById('settingCity').value);}
+function checkNotifBanner(){try{if(!('Notification' in window))return;if(Notification.permission==='default'&&!localStorage.getItem('notifAsked'))document.getElementById('notifBarHome').style.display='flex';if(Notification.permission==='granted'){document.getElementById('notifBtn').textContent='✅ Enabled';document.getElementById('notifBtn').style.background='var(--green)';}}catch(e){}}
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+function init(){updateClock();setInterval(updateClock,1000);loadPrayers();renderAlarms();hadithIdx=Math.floor(Math.random()*HADITHS.length);quoteIdx=Math.floor(Math.random()*QUOTES.length);waterG=parseInt(localStorage.getItem('water')||'0');const city=localStorage.getItem('city');if(city){try{document.getElementById('settingCity').value=city;document.getElementById('namazCitySelect').value=city;}catch(e){}}if(localStorage.getItem('azan')==='true')document.getElementById('azanToggle').checked=true;if(localStorage.getItem('dailyQuote')==='true')document.getElementById('dailyQuoteToggle').checked=true;checkNotifBanner();const today=new Date().toDateString();if(localStorage.getItem('lastQuiz')!==today){localStorage.setItem('lastQuiz',today);setTimeout(showQuiz,2000);if(localStorage.getItem('dailyQuote')==='true'){const q=QUOTES[quoteIdx];setTimeout(()=>notify('✨ Islamic Quote',q.en+' — '+q.src),5000);}}}
+init();
+</script>
+</body>
+</html>
